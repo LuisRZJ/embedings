@@ -1,0 +1,77 @@
+/* ============================================================
+   Componente reutilizable: desplegable de modelos (autocomplete)
+   ============================================================
+   Uso:
+     <link rel="stylesheet" href="componentes/base/base.css">
+     <link rel="stylesheet" href="componentes/model-select/model-select.css">
+     <div class="model-field" data-model-type="embeddings">
+       <input class="hexin" id="modelId" type="text"
+         role="combobox" aria-expanded="false"
+         aria-controls="modelId-list" aria-autocomplete="list"
+         placeholder="openai/text-embedding-3-small"
+         autocomplete="off" spellcheck="false">
+       <button class="model-toggle" type="button" tabindex="-1"
+         aria-label="Ver modelos" aria-expanded="false">
+         <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.4"
+           stroke-linecap="round" stroke-linejoin="round"
+           aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+       </button>
+       <div class="model-list" id="modelId-list"
+            role="listbox" aria-label="Modelos de embeddings" hidden></div>
+     </div>
+     <script src="componentes/model-select/model-select.js"></script>
+
+   data-model-type: "embeddings" | "chat"
+     embeddings -> GET /models?output_modalities=embeddings&endpoints=/api/v1/embeddings
+     chat       -> GET /models?output_modalities=text&endpoints=/api/v1/chat/completions
+
+   Sin HTML extra: model-select.js tambien detecta inputs
+   [data-model-type] sueltos y les inyecta lista + boton.
+   ============================================================ */
+
+.model-field{position:relative}
+.model-field .hexin{width:100%;padding-right:36px;text-overflow:ellipsis}
+.model-toggle{
+  position:absolute;top:50%;right:6px;transform:translateY(-50%);
+  width:28px;height:28px;border:1px solid var(--c-border);
+  background:var(--c-panel);color:var(--c-text);border-radius:8px;
+  display:grid;place-items:center;padding:0;cursor:pointer;
+}
+.model-toggle:hover{background:var(--c-bg)}
+.model-toggle[aria-expanded="true"] svg{transform:rotate(180deg)}
+.model-toggle svg{transition:transform .2s}
+
+.model-list{
+  position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:90;
+  max-height:264px;overflow:auto;
+  background:var(--c-panel);border:1px solid var(--c-border);
+  border-radius:10px;padding:4px;
+  box-shadow:0 16px 40px rgba(0,0,0,.18);
+}
+.model-list[hidden]{display:none}
+.model-item{
+  display:flex;flex-direction:column;gap:1px;
+  padding:8px 10px;border-radius:8px;cursor:pointer;
+  font-size:13px;color:var(--c-text);
+}
+.model-item .mid{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;word-break:break-all}
+.model-item .mname{font-size:12px;color:var(--c-muted)}
+.model-item mark{background:color-mix(in srgb, var(--c-ctl) 18%, transparent);color:inherit;border-radius:3px;padding:0 2px}
+.model-item.active,.model-item:hover{background:var(--c-bg)}
+.model-item.active{box-shadow:inset 0 0 0 1px var(--c-border)}
+.model-note{
+  padding:10px;font-size:13px;color:var(--c-muted);cursor:default;
+}
+.model-note[aria-disabled="true"]{cursor:default}
+.model-custom .mid{font-weight:650}
+.model-count{
+  padding:6px 10px 2px;font-size:11.5px;color:var(--c-muted);
+  font-variant-numeric:tabular-nums;position:sticky;top:0;
+  background:var(--c-panel);
+}
+.model-list .model-item:first-child{margin-top:0}
+
+@media (prefers-reduced-motion:reduce){
+  .model-toggle svg{transition:none}
+}

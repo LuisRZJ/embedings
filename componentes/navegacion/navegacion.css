@@ -1,0 +1,89 @@
+/* ============================================================
+   Componente reutilizable: navegacion con transicion moderna
+   ============================================================
+   Uso:
+     <link rel="stylesheet" href="componentes/base/base.css">
+     <link rel="stylesheet" href="componentes/navegacion/navegacion.css">
+     <script src="componentes/navegacion/navegacion-boot.js"></script>
+     <div class="nav-veil" aria-hidden="true"></div>
+     <script src="componentes/navegacion/navegacion.js"></script>
+
+   Efecto:
+     1. Primario (Chrome/Edge/Safari): View Transitions API
+        (document.startViewTransition) con revelado circular
+        desde el punto de clic (clip-path) + fade/scale/blur.
+     2. Respaldo (otros navegadores o file://): velo circular
+        del color del tema que cubre y revela, persistido con
+        sessionStorage entre paginas.
+
+   Solo intercepta enlaces internos .html (sin target=_blank,
+   sin download, sin modificadores, sin #anclas, sin externos).
+   Respeta prefers-reduced-motion y usa --c-bg del tema para
+   que no haya parpadeo en blanco.
+   ============================================================ */
+
+/* View Transition (solo navegadores que la soportan) */
+::view-transition-group(root){
+  animation-duration:.5s;
+  animation-timing-function:cubic-bezier(.22,1,.36,1);
+}
+::view-transition-old(root){
+  animation:nav-vt-old .5s cubic-bezier(.22,1,.36,1) both;
+}
+::view-transition-new(root){
+  animation:nav-vt-new .5s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes nav-vt-old{
+  to{opacity:0;transform:scale(.98);filter:blur(8px)}
+}
+@keyframes nav-vt-new{
+  from{opacity:0;clip-path:circle(0% at var(--nav-x,50%) var(--nav-y,50%))}
+  to{opacity:1;clip-path:circle(150% at var(--nav-x,50%) var(--nav-y,50%))}
+}
+
+/* Velo de respaldo (circular, color del tema) */
+.nav-veil{
+  position:fixed;top:0;right:0;bottom:0;left:0;inset:0;z-index:9999;
+  background:var(--c-bg,#f6f6f4);
+  clip-path:circle(0% at var(--nav-x,50%) var(--nav-y,50%));
+  pointer-events:none;visibility:hidden;
+  display:grid;place-items:center;
+  transition:clip-path .42s cubic-bezier(.22,1,.36,1),visibility .42s;
+}
+/* El favicon (6 puntos) en el centro del velo, integrado con
+   el clip circular: aparece cuando el circulo llega al centro
+   y se va al revelar, con escala + fade. */
+.nav-veil-icon{
+  width:64px;height:64px;border-radius:14px;overflow:hidden;flex:0 0 auto;
+  box-shadow:0 12px 28px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.12);
+  opacity:0;transform:scale(.85) translateY(6px);
+  transition:opacity .25s ease,transform .35s cubic-bezier(.22,1,.36,1);
+}
+.nav-veil-icon svg{width:100%;height:100%;display:block}
+/* Cubriendo desde el primer paint (boot en <head>): instantaneo,
+   sin transicion, para que no parpadee el contenido. */
+html.nav-covering .nav-veil{
+  visibility:visible;pointer-events:auto;
+  clip-path:circle(150% at var(--nav-x,50%) var(--nav-y,50%));
+  transition:none;
+}
+html.nav-covering .nav-veil-icon{opacity:1;transform:none;transition:none}
+.nav-veil.cover{
+  visibility:visible;pointer-events:auto;
+  clip-path:circle(150% at var(--nav-x,50%) var(--nav-y,50%));
+}
+.nav-veil.cover .nav-veil-icon{opacity:1;transform:none;transition-delay:.12s}
+/* Al revelar, se encoje desde donde se cubrio */
+.nav-veil.reveal{
+  visibility:visible;pointer-events:auto;
+  clip-path:circle(0% at var(--nav-x,50%) var(--nav-y,50%));
+}
+.nav-veil.reveal .nav-veil-icon{opacity:0;transform:scale(.92) translateY(-4px)}
+
+@media (prefers-reduced-motion:reduce){
+  ::view-transition-group(root),
+  ::view-transition-old(root),
+  ::view-transition-new(root){animation:none}
+  .nav-veil{transition:none}
+  .nav-veil-icon{transition:none}
+}

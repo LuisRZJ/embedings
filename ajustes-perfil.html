@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ajustes y perfil · Clasificador semántico</title>
+<meta name="theme-color" content="#f6f6f4">
+<link rel="icon" type="image/svg+xml" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="%23161616"/><g fill="%238f8f8a"><circle cx="19" cy="22" r="5"/><circle cx="28" cy="36" r="5"/><circle cx="18" cy="47" r="5"/></g><g fill="%23f4f4f1"><circle cx="46" cy="24" r="5"/><circle cx="41" cy="40" r="5"/><circle cx="50" cy="49" r="5"/></g></svg>'>
+<link rel="apple-touch-icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="%23161616"/><g fill="%238f8f8a"><circle cx="19" cy="22" r="5"/><circle cx="28" cy="36" r="5"/><circle cx="18" cy="47" r="5"/></g><g fill="%23f4f4f1"><circle cx="46" cy="24" r="5"/><circle cx="41" cy="40" r="5"/><circle cx="50" cy="49" r="5"/></g></svg>'>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="componentes/base/base.css">
+<link rel="stylesheet" href="componentes/panel-tema/panel-tema.css">
+<link rel="stylesheet" href="componentes/toast/toast.css">
+<link rel="stylesheet" href="componentes/navegacion/navegacion.css">
+<link rel="stylesheet" href="componentes/model-select/model-select.css">
+<link rel="stylesheet" href="componentes/collapsible/collapsible.css">
+<link rel="stylesheet" href="componentes/perfil-sync/perfil-sync.css">
+<script src="componentes/navegacion/navegacion-boot.js"></script>
+<style>
+/* Solo estilos propios de esta página. Lo compartido vive en base.css. */
+.app{max-width:880px;margin:0 auto;padding:20px}
+.hero{padding:10px 4px 20px}
+.hero h2{font-size:clamp(30px,4.6vw,48px);line-height:1.04;letter-spacing:-.035em;margin:0 0 12px;font-weight:700}
+.hero p{font-size:16px;color:var(--c-muted);margin:0;max-width:62ch}
+.card{background:var(--c-panel);border:1px solid var(--c-border);border-radius:14px;padding:22px;margin-bottom:16px}
+.card h2{font-size:18px;margin:0 0 4px;letter-spacing:-.02em}
+.card .desc{margin:0 0 16px;color:var(--c-muted);font-size:14px}
+.module{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--c-border);background:var(--c-bg);border-radius:12px;padding:16px;text-decoration:none}
+.module:hover{border-color:var(--c-text)}
+.module b{display:block;font-size:15px}
+.module span{display:block;font-size:13px;color:var(--c-muted);margin-top:2px}
+.module .arrow{flex:0 0 auto;font-size:18px}
+.foot{border-top:1px solid var(--c-border);padding:18px 4px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;font-size:13px;color:var(--c-muted)}
+.foot a{color:var(--c-text);text-decoration:none;font-weight:550}
+.topbar{display:flex;justify-content:flex-end;margin-bottom:8px}
+.topbar .btn-ghost{width:auto;padding:9px 14px}
+@media (max-width:640px){.app{padding:12px}}
+</style>
+</head>
+<body>
+<div class="nav-veil" aria-hidden="true"><span class="nav-veil-icon"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#161616"/><g fill="#8f8f8a"><circle cx="19" cy="22" r="5"/><circle cx="28" cy="36" r="5"/><circle cx="18" cy="47" r="5"/></g><g fill="#f4f4f1"><circle cx="46" cy="24" r="5"/><circle cx="41" cy="40" r="5"/><circle cx="50" cy="49" r="5"/></g></svg></span></div>
+<div class="app">
+  <main>
+    <div class="topbar">
+      <a class="btn-ghost" href="index.html" style="text-decoration:none;margin-right:8px">← Volver</a>
+      <button class="btn-ghost" type="button" data-open-theme>⚙ Ajustes de tema</button>
+    </div>
+    <section class="hero">
+      <h2>Ajustes y perfil</h2>
+      <p>Plantilla vacía lista para trabajar.</p>
+    </section>
+
+    <!-- Clave y modelos de OpenRouter (comparten almacenamiento con Zona de pruebas) -->
+    <section class="card" id="ajustes-panel">
+      <h2>Ajustes</h2>
+      <p class="desc">Proveedor principal, claves y modelos de IA.</p>
+      <div class="grp">
+        <div class="lbl">Proveedor principal</div>
+        <div class="seg" id="providerSeg">
+          <button type="button" data-provider="openrouter" aria-pressed="true">OpenRouter</button>
+          <button type="button" data-provider="google" aria-pressed="false">Google</button>
+        </div>
+        <p class="hint">Se define solo aquí. Si falla 3 veces seguidas, se usará el otro como respaldo (si tiene clave y modelo).</p>
+      </div>
+
+      <div id="openrouter-section">
+      <p style="font-weight:700;font-size:14px;margin:14px 0 10px">OpenRouter</p>
+      <div class="grp">
+        <label for="apiKey">Clave de OpenRouter <span class="val"><a href="https://openrouter.ai/keys" target="_blank" rel="noopener">Crear clave ↗</a></span></label>
+        <div class="row">
+          <input class="hexin" id="apiKey" type="password" placeholder="sk-or-v1-..." autocomplete="off" spellcheck="false" aria-label="Clave de API de OpenRouter">
+          <button class="btn-mini" id="toggleKey" type="button">Mostrar</button>
+          <button class="btn-mini" id="copyKey" type="button">Copiar</button>
+        </div>
+        <p class="hint">Se guarda solo en tu navegador (localStorage). La misma clave se usa en Zona de pruebas.</p>
+      </div>
+
+      <div class="grp">
+        <label for="modelId">ID del modelo <span class="val"><a href="https://openrouter.ai/models?filter=embeddings" target="_blank" rel="noopener">Ver modelos ↗</a></span></label>
+        <div class="model-field" data-model-type="embeddings">
+          <input class="hexin" id="modelId" data-model-type="embeddings" type="text" placeholder="openai/text-embedding-3-small" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="modelId-list" aria-autocomplete="list">
+          <button class="model-toggle" type="button" tabindex="-1" aria-label="Ver modelos" aria-expanded="false"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+          <div class="model-list" id="modelId-list" role="listbox" aria-label="Modelos de embeddings" hidden></div>
+        </div>
+        <p class="hint">Modelo de embeddings para clasificar por similitud de coseno. Se refleja en Zona de pruebas.</p>
+      </div>
+
+      <div class="grp">
+        <label for="genModelId">ID del modelo generador</label>
+        <div class="model-field" data-model-type="chat">
+          <input class="hexin" id="genModelId" data-model-type="chat" type="text" placeholder="openai/gpt-4o-mini" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="genModelId-list" aria-autocomplete="list">
+          <button class="model-toggle" type="button" tabindex="-1" aria-label="Ver modelos" aria-expanded="false"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+          <div class="model-list" id="genModelId-list" role="listbox" aria-label="Modelos de chat" hidden></div>
+        </div>
+        <p class="hint">Modelo de chat para crear categorías y clasificar con LLM. Se refleja en Zona de pruebas.</p>
+      </div>
+      </div>
+
+      <div id="google-section" hidden>
+      <p style="font-weight:700;font-size:14px;margin:18px 0 10px">Google (AI Studio)</p>
+      <div class="grp">
+        <label for="googleKey">Clave de Google <span class="val"><a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Crear clave ↗</a></span></label>
+        <div class="row">
+          <input class="hexin" id="googleKey" type="password" placeholder="AIza..." autocomplete="off" spellcheck="false" aria-label="Clave de API de Google">
+          <button class="btn-mini" id="toggleGoogleKey" type="button">Mostrar</button>
+          <button class="btn-mini" id="copyGoogleKey" type="button">Copiar</button>
+        </div>
+      </div>
+
+      <div class="grp">
+        <label for="googleModelId">ID del modelo <span class="val">embeddings</span></label>
+        <div class="model-field" data-model-type="gembeddings">
+          <input class="hexin" id="googleModelId" data-model-type="gembeddings" type="text" placeholder="gemini-embedding-001" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="googleModelId-list" aria-autocomplete="list">
+          <button class="model-toggle" type="button" tabindex="-1" aria-label="Ver modelos" aria-expanded="false"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+          <div class="model-list" id="googleModelId-list" role="listbox" aria-label="Modelos de embeddings de Google" hidden></div>
+        </div>
+        <p class="hint">Solo Gemini Embedding 1 y Gemini Embedding 2.</p>
+      </div>
+
+      <div class="grp">
+        <label for="googleGenModelId">ID del modelo generador <span class="val">chat</span></label>
+        <div class="model-field" data-model-type="gchat">
+          <input class="hexin" id="googleGenModelId" data-model-type="gchat" type="text" placeholder="gemini-3.1-flash-lite" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="googleGenModelId-list" aria-autocomplete="list">
+          <button class="model-toggle" type="button" tabindex="-1" aria-label="Ver modelos" aria-expanded="false"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+          <div class="model-list" id="googleGenModelId-list" role="listbox" aria-label="Modelos de chat de Google" hidden></div>
+        </div>
+        <p class="hint">Solo Gemini 3.1 Flash Lite y Gemini 3.5 Flash Lite.</p>
+      </div>
+      </div>
+    </section>
+
+    <!-- Perfil y Respaldo en la Nube -->
+    <section class="card sync-card" id="perfil-panel">
+      <h2>Perfil y Base de Datos (GitHub)</h2>
+      <p class="desc">Vincula un repositorio de GitHub como base de datos en la nube para respaldar, fusionar y restaurar la información del clasificador.</p>
+
+      <!-- Tarjeta de Perfil de GitHub -->
+      <div class="sync-profile-badge" id="ghProfileBadge" hidden>
+        <img class="sync-avatar" id="ghAvatar" src="" alt="Avatar">
+        <div class="sync-profile-info">
+          <div class="sync-profile-name" id="ghName">Usuario</div>
+          <a class="sync-profile-login" id="ghLogin" href="#" target="_blank" rel="noopener">@usuario</a>
+        </div>
+        <span class="sync-badge-status idle" id="ghStatusBadge">Sin verificar</span>
+      </div>
+
+      <!-- Estado y fechas de sincronización -->
+      <div class="sync-status-box" id="ghStatusBox">
+        <div class="title">
+          <span>Estado de sincronización</span>
+        </div>
+        <div id="ghStatusDesc">Configura tu token y repositorio para consultar el estado en la nube.</div>
+        <div class="dates" id="ghDates"></div>
+      </div>
+
+      <!-- Interruptor estilizado de respaldo automático -->
+      <div class="sync-switch-row">
+        <div class="sync-switch-info">
+          <span class="sync-switch-title">Respaldo automático en la nube</span>
+          <span class="sync-switch-desc">Sube los cambios automáticamente tras 3 segundos de inactividad</span>
+        </div>
+        <label class="sync-switch">
+          <input type="checkbox" id="ghAutoBackupSwitch" role="switch" aria-label="Activar respaldo automático en la nube">
+          <span class="sync-slider"></span>
+        </label>
+      </div>
+
+      <!-- Autenticación en Vercel -->
+      <div class="grp" id="ghPasswordGroup" hidden>
+        <label for="ghAuthPassword">Contraseña de acceso <span class="val">Protegido en Vercel</span></label>
+        <div class="row">
+          <input class="hexin" id="ghAuthPassword" type="password" placeholder="Ingresa tu contraseña de autenticación" autocomplete="current-password" aria-label="Contraseña de acceso al repositorio">
+          <button class="btn-mini" id="toggleGhPassword" type="button">Mostrar</button>
+        </div>
+        <p class="hint">Las credenciales de GitHub se gestionan en Vercel. Ingresa tu contraseña personal para autorizar las operaciones.</p>
+      </div>
+
+      <!-- Acciones de sincronización -->
+      <div class="sync-actions">
+        <button class="btn-main" id="ghBtnBackup" type="button">Respaldar en GitHub</button>
+        <button class="btn-ghost" id="ghBtnCheck" type="button">Comprobar nube</button>
+        <button class="btn-warn" id="ghBtnMerge" type="button" hidden>Fusionar cambios</button>
+        <button class="btn-danger" id="ghBtnRestore" type="button" hidden>Forzar restauración</button>
+      </div>
+
+      <!-- Sección interna colapsable con los ajustes (colapsada por defecto) -->
+      <div class="sync-collapsible-box">
+        <div class="sync-collapsible-head" id="ghSettingsHead">
+          <h3>
+            <span>⚙ Ajustes del repositorio</span>
+            <span class="sub">Token, repositorio y opciones</span>
+          </h3>
+          <button class="collapse-btn" id="ghSettingsToggle" type="button" aria-expanded="false" aria-controls="ghSettingsBody" title="Expandir ajustes" aria-label="Expandir ajustes">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+        </div>
+        <div class="collapsible closed" id="ghSettingsBody" inert>
+          <div class="collapsible-in" style="padding-top:14px">
+            <div class="sync-env-notice" id="ghEnvNotice" hidden>
+              <span>🔒</span>
+              <span><b>Modo Vercel activo:</b> Credenciales aseguradas en variables de entorno del servidor.</span>
+            </div>
+
+            <div class="grp">
+              <label for="ghToken">Personal Access Token (GitHub) <span class="val"><a href="https://github.com/settings/tokens?type=beta" target="_blank" rel="noopener">Crear token ↗</a></span></label>
+              <div class="row">
+                <input class="hexin" id="ghToken" type="password" placeholder="ghp_... o github_pat_..." autocomplete="off" spellcheck="false" aria-label="Token de acceso personal de GitHub">
+                <button class="btn-mini" id="toggleGhToken" type="button">Mostrar</button>
+                <button class="btn-mini" id="copyGhToken" type="button">Copiar</button>
+              </div>
+              <p class="hint">Requiere permiso de lectura y escritura de contenidos (Contents: Read & Write) sobre el repositorio.</p>
+            </div>
+
+            <div class="sync-grid-2">
+              <div class="grp">
+                <label for="ghRepo">Repositorio (owner/repo)</label>
+                <input class="hexin" id="ghRepo" type="text" placeholder="tu-usuario/tu-repo" autocomplete="off" spellcheck="false">
+                <p class="hint">Puede ser privado o público.</p>
+              </div>
+              <div class="grp">
+                <label for="ghBranch">Rama</label>
+                <input class="hexin" id="ghBranch" type="text" placeholder="main" value="main" autocomplete="off" spellcheck="false">
+                <p class="hint">Por defecto: main.</p>
+              </div>
+            </div>
+
+            <div style="margin-top:14px">
+              <button class="btn-ghost" id="ghBtnTest" type="button" style="width:auto;padding:8px 14px">Probar conexión</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="foot">
+      <span>Clasificador semántico</span>
+      <a href="index.html">Inicio ↗</a>
+    </footer>
+  </main>
+</div>
+<div data-theme-panel></div>
+<div data-toast-root></div>
+<script src="componentes/panel-tema/panel-tema.js"></script>
+<script src="componentes/toast/toast.js"></script>
+<script src="componentes/collapsible/collapsible.js"></script>
+<script src="componentes/navegacion/navegacion.js"></script>
+<script src="componentes/model-select/model-select.js"></script>
+<script src="componentes/perfil-sync/perfil-sync.js"></script>
+<script>
+(function () {
+  var LS_KEY = "embeddings-classifier-settings-v3";
+  var input = document.getElementById("apiKey");
+  var modelInput = document.getElementById("modelId");
+  var genInput = document.getElementById("genModelId");
+  var googleInput = document.getElementById("googleKey");
+  var googleModelInput = document.getElementById("googleModelId");
+  var googleGenInput = document.getElementById("googleGenModelId");
+  var seg = document.getElementById("providerSeg");
+  var primaryProvider = "openrouter";
+  var saveTimer = null;
+
+  function setSeg(value) {
+    primaryProvider = value === "google" ? "google" : "openrouter";
+    Array.prototype.forEach.call(seg.querySelectorAll("button"), function (b) {
+      b.setAttribute("aria-pressed", String(b.dataset.provider === primaryProvider));
+    });
+    /* Solo la sección del proveedor principal es visible. */
+    var orSec = document.getElementById("openrouter-section");
+    var gSec = document.getElementById("google-section");
+    if (orSec) orSec.hidden = primaryProvider !== "openrouter";
+    if (gSec) gSec.hidden = primaryProvider !== "google";
+  }
+
+  /* Carga clave + proveedores + modelos (v3, con migración v2) sin tocar el resto. */
+  function loadSettings() {
+    try {
+      var raw = localStorage.getItem(LS_KEY)
+        || localStorage.getItem("embeddings-classifier-settings-v2");
+      if (!raw) {
+        setSeg("openrouter");
+        return;
+      }
+      var d = JSON.parse(raw);
+      if (d && d.key) input.value = d.key;
+      if (d && d.googleKey) googleInput.value = d.googleKey;
+      if (d && d.model) modelInput.value = d.model;
+      if (d && d.genModel) genInput.value = d.genModel;
+      if (d && d.googleModel) googleModelInput.value = d.googleModel;
+      if (d && d.googleGenModel) googleGenInput.value = d.googleGenModel;
+      setSeg(d && d.primaryProvider === "google" ? "google" : "openrouter");
+    } catch (e) { }
+  }
+
+  /* Guarda claves + modelos + proveedor, preservando categorias, modo, dimensiones y tema. */
+  function saveSettings() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(function () {
+      try {
+        var raw = localStorage.getItem(LS_KEY);
+        var d = raw ? JSON.parse(raw) : {};
+        d.key = input.value.trim();
+        d.googleKey = googleInput.value.trim();
+        d.model = modelInput.value.trim();
+        d.genModel = genInput.value.trim();
+        d.googleModel = googleModelInput.value.trim();
+        d.googleGenModel = googleGenInput.value.trim();
+        d.primaryProvider = primaryProvider;
+        d.updatedAt = new Date().toISOString();
+        localStorage.setItem(LS_KEY, JSON.stringify(d));
+
+        /* Disparar respaldo automático si está activado */
+        if (window.PerfilSync && window.PerfilSync.scheduleAutoBackup) {
+          window.PerfilSync.scheduleAutoBackup();
+        }
+      } catch (e) { }
+    }, 250);
+  }
+
+  function copyValue(inp) {
+    var value = inp.value.trim();
+    if (!value) {
+      showToast("No hay clave para copiar", "Escribe tu clave primero.");
+      return;
+    }
+    function fallback() {
+      var ta = document.createElement("textarea");
+      ta.value = value;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "absolute";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        if (!document.execCommand("copy")) throw new Error();
+        showToast("Clave copiada", "Copiada al portapapeles.", "ok");
+      } catch (e) {
+        showToast("No se pudo copiar", e.message || "");
+      }
+      ta.remove();
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(value).then(
+        function () { showToast("Clave copiada", "Copiada al portapapeles.", "ok"); },
+        fallback
+      );
+    } else {
+      fallback();
+    }
+  }
+
+  function wireKey(inp) {
+    var isGh = inp.id === "ghToken";
+    var toggle = document.getElementById(isGh ? "toggleGhToken" : (inp === input ? "toggleKey" : "toggleGoogleKey"));
+    var copy = document.getElementById(isGh ? "copyGhToken" : (inp === input ? "copyKey" : "copyGoogleKey"));
+    if (toggle) {
+      toggle.addEventListener("click", function () {
+        var show = inp.type === "password";
+        inp.type = show ? "text" : "password";
+        toggle.textContent = show ? "Ocultar" : "Mostrar";
+      });
+    }
+    if (copy) {
+      copy.addEventListener("click", function () { copyValue(inp); });
+    }
+    if (!isGh) {
+      inp.addEventListener("input", saveSettings);
+    }
+  }
+  wireKey(input);
+  wireKey(googleInput);
+  var ghTokenInput = document.getElementById("ghToken");
+  if (ghTokenInput) wireKey(ghTokenInput);
+
+  seg.addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-provider]");
+    if (!b) return;
+    setSeg(b.dataset.provider);
+    saveSettings();
+  });
+
+  modelInput.addEventListener("input", saveSettings);
+  genInput.addEventListener("input", saveSettings);
+  googleModelInput.addEventListener("input", saveSettings);
+  googleGenInput.addEventListener("input", saveSettings);
+  loadSettings();
+
+  /* Inicializar el sincronizador de perfil y GitHub */
+  if (window.PerfilSync) {
+    window.PerfilSync.init({
+      onDataReloaded: function () {
+        loadSettings();
+      }
+    });
+  }
+
+  /* Control colapsable de ajustes del repositorio */
+  var ghSettingsHead = document.getElementById("ghSettingsHead");
+  var ghSettingsToggle = document.getElementById("ghSettingsToggle");
+  var ghSettingsBody = document.getElementById("ghSettingsBody");
+  if (ghSettingsHead && ghSettingsToggle && ghSettingsBody && window.Collapsible) {
+    ghSettingsHead.addEventListener("click", function (e) {
+      /* Prevenir interferencia con botones o enlaces internos si los hubiera en el header */
+      if (e.target.closest("button") && e.target.closest("button") !== ghSettingsToggle) return;
+      var isClosed = Collapsible.isCollapsed(ghSettingsToggle);
+      Collapsible.set(ghSettingsToggle, ghSettingsBody, !isClosed, {
+        expandLabel: "Expandir ajustes",
+        collapseLabel: "Colapsar ajustes"
+      });
+    });
+  }
+})();
+</script>
+</body>
+</html>

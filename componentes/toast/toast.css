@@ -1,0 +1,28 @@
+/* ============================================================
+   Componente reutilizable: notificaciones toast (vidrio esmerilado)
+   ============================================================
+   Uso:
+     <link rel="stylesheet" href="componentes/base/base.css">
+     <link rel="stylesheet" href="componentes/toast/toast.css">
+     <div data-toast-root></div>
+     <script src="componentes/toast/toast.js"></script>
+     <script>showToast("Título", "Detalle", "ok");</script>
+
+   JS (global Toast + showToast por compatibilidad):
+     Toast.show(msg, detail, type)   — type: "ok" | "error" (defecto)
+     showToast(msg, detail, type)    — alias idéntico
+
+   El contenedor se crea solo si no existe ninguno:
+   busca [data-toast-root], .toasts o #toasts en ese orden.
+   ============================================================ */
+
+.toasts{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:95;display:flex;flex-direction:column;gap:8px;align-items:center;width:min(460px,calc(100vw - 28px));pointer-events:none}
+.toast{pointer-events:auto;display:flex;align-items:flex-start;gap:12px;width:100%;color:var(--c-text);border:1px solid color-mix(in srgb, var(--c-text) 18%, transparent);border-radius:12px;padding:12px 14px;font-size:13px;font-weight:500;box-shadow:0 16px 40px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.18);opacity:0;transform:translateY(10px);transition:opacity .2s,transform .2s;backdrop-filter:blur(14px) saturate(1.4);-webkit-backdrop-filter:blur(14px) saturate(1.4);background:color-mix(in srgb, var(--c-panel) 72%, transparent)}
+.toast.in{opacity:1;transform:translateY(0)}
+.toast .ic{flex:0 0 auto;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;background:var(--c-ctl);color:var(--c-ctl-t)}
+.toast .msg{flex:1;min-width:0;white-space:pre-wrap;word-break:break-word;line-height:1.4}
+.toast .msg b{display:block;font-weight:700;margin-bottom:2px}
+.toast .msg .detail{display:block;font-weight:450;opacity:.85;font-size:12.5px;max-height:120px;overflow:auto}
+.toast .x{border:0;background:transparent;color:inherit;opacity:.7;cursor:pointer;font:inherit;font-size:16px;line-height:1;padding:0 2px}
+.toast .x:hover{opacity:1}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.toast{background:var(--c-panel)}}

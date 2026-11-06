@@ -1,0 +1,55 @@
+/* ============================================================
+   Componente reutilizable: colapsable (acordeón)
+   ============================================================
+   Uso:
+     <link rel="stylesheet" href="componentes/base/base.css">
+     <link rel="stylesheet" href="componentes/collapsible/collapsible.css">
+     <button class="collapse-btn" aria-expanded="true"
+             aria-controls="miBody" aria-label="Colapsar mi sección"
+             title="Colapsar mi sección">
+       <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.2"
+            stroke-linecap="round" stroke-linejoin="round"
+            aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+     </button>
+     <div class="collapsible" id="miBody"><div class="collapsible-in">
+       ... contenido ...
+     </div></div>
+     <script src="componentes/collapsible/collapsible.js"></script>
+
+   JS (global Collapsible):
+     Collapsible.set(toggle, body, collapsed, labels?)
+     Collapsible.toggle(toggle, body, labels?) -> collapsed (bool)
+
+   toggle/body: selector ("#id") o elemento.
+   labels: {expandLabel, collapseLabel, expandTitle, collapseTitle}
+     Si no se pasa título, se usa la etiqueta como título.
+     Mantiene sincronizados aria-expanded, .closed, inert y
+     título/etiqueta del botón. El chevron gira vía CSS con
+     [aria-expanded="false"].
+   ============================================================ */
+
+.collapsible{display:grid;grid-template-rows:1fr;transition:grid-template-rows .22s ease}
+.collapsible.closed{grid-template-rows:0fr}
+.collapsible-in{overflow:hidden;min-height:0}
+
+/* Botones de colapso (3 tamaños, mismo patrón chevron) */
+.collapse-btn{flex:0 0 auto;width:34px;height:34px;border:1px solid var(--c-border);background:transparent;color:var(--c-text);border-radius:10px;display:grid;place-items:center;cursor:pointer;padding:0}
+.collapse-btn:hover{background:var(--c-bg)}
+.collapse-btn svg{transition:transform .2s}
+.collapse-btn[aria-expanded="false"] svg{transform:rotate(-90deg)}
+
+.cat-toggle{flex:0 0 auto;width:30px;height:30px;border:1px solid var(--c-border);background:var(--c-panel);color:var(--c-text);border-radius:9px;display:grid;place-items:center;padding:0;cursor:pointer}
+.cat-toggle:hover{background:var(--c-border)}
+.cat-toggle svg{transition:transform .2s}
+.cat-toggle[aria-expanded="false"] svg{transform:rotate(-90deg)}
+
+.gen-toggle{flex:0 0 auto;width:26px;height:26px;border:1px solid var(--c-border);background:var(--c-panel);color:var(--c-text);border-radius:8px;display:grid;place-items:center;padding:0;cursor:pointer}
+.gen-toggle:hover{background:var(--c-border)}
+.gen-toggle svg{transition:transform .2s}
+.gen-toggle[aria-expanded="false"] svg{transform:rotate(-90deg)}
+
+@media (prefers-reduced-motion:reduce){
+  .collapsible{transition:none}
+  .collapse-btn svg,.cat-toggle svg,.gen-toggle svg{transition:none}
+}

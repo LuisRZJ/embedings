@@ -1,0 +1,88 @@
+/* ============================================================
+   Base reutilizable: tokens, reset, scrollbar, formularios,
+   botones, segmented control y badges.
+   ============================================================
+   Uso:
+     <link rel="stylesheet" href="componentes/base/base.css">
+     <link rel="stylesheet" href="componentes/panel-tema/panel-tema.css">
+     <link rel="stylesheet" href="componentes/modal/modal.css">
+   Orden: base primero, luego los componentes que la extienden.
+   ============================================================ */
+
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --c-bg:#f6f6f4;--c-panel:#ffffff;--c-text:#161616;--c-muted:#6b6b68;--c-border:#e2e2de;--c-ctl:#161616;--c-ctl-t:#ffffff;
+  --font:"Instrument Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --c-bg:#0e0e0e;--c-panel:#171717;--c-text:#efefec;--c-muted:#9a9a96;--c-border:#2a2a28;--c-ctl:#efefec;--c-ctl-t:#111111;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--c-bg)}
+body{margin:0;background:var(--c-bg);color:var(--c-text);font:15px/1.5 var(--font)}
+a{color:var(--c-text)}
+[hidden]{display:none!important}
+:focus-visible{outline:2px solid var(--c-text);outline-offset:2px}
+
+/* Barras de desplazamiento con el tema activo */
+*{scrollbar-width:thin;scrollbar-color:var(--c-muted) var(--c-bg)}
+*::-webkit-scrollbar{width:10px;height:10px}
+*::-webkit-scrollbar-track{background:var(--c-bg)}
+*::-webkit-scrollbar-thumb{
+  background:var(--c-muted);
+  background:color-mix(in srgb, var(--c-muted) 55%, transparent);
+  border:2px solid var(--c-bg);
+  border-radius:99px;
+  background-clip:padding-box;
+}
+*::-webkit-scrollbar-thumb:hover{
+  background:var(--c-text);
+  background:color-mix(in srgb, var(--c-text) 75%, transparent);
+  background-clip:padding-box;
+}
+*::-webkit-scrollbar-thumb:active{background:var(--c-text);background-clip:padding-box}
+*::-webkit-scrollbar-corner{background:var(--c-bg)}
+
+/* Agrupación de controles */
+.grp{margin:0 0 18px}
+.grp>label,.grp>.lbl{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:550;margin-bottom:8px;gap:8px}
+.grp .val{color:var(--c-muted);font-weight:450;font-variant-numeric:tabular-nums;font-size:12px}
+.grp .val a{color:var(--c-text);font-weight:550;text-decoration:none}
+.grp .val a:hover{text-decoration:underline}
+.row{display:flex;gap:8px}
+.hint{font-size:13px;color:var(--c-muted);margin:8px 0 0}
+.hint code{background:var(--c-bg);border:1px solid var(--c-border);padding:1px 6px;border-radius:6px;font-size:12px}
+.checks{display:grid;gap:6px;font-size:13px}
+.checks div{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.checks input[type=checkbox]{width:18px;height:18px;accent-color:var(--c-ctl)}
+.badge{font-size:12px;font-weight:600;padding:2px 8px;border-radius:99px;border:1px solid var(--c-border);white-space:nowrap}
+.badge.ok{background:var(--c-ctl);color:var(--c-ctl-t);border-color:var(--c-ctl)}
+
+/* Botones */
+.btn-main{width:100%;border:0;border-radius:10px;padding:10px;background:var(--c-ctl);color:var(--c-ctl-t);font:inherit;font-weight:600;cursor:pointer}
+.btn-main:hover{opacity:.92}
+.btn-main:disabled{opacity:.5;cursor:not-allowed}
+.btn-ghost{width:100%;border:1px solid var(--c-border);border-radius:10px;padding:9px;background:transparent;color:var(--c-text);font:inherit;font-weight:600;cursor:pointer}
+.btn-ghost:hover{background:var(--c-bg)}
+.btn-ghost:disabled{opacity:.5;cursor:not-allowed}
+.btn-mini{border:1px solid var(--c-border);border-radius:10px;padding:8px 12px;background:var(--c-panel);color:var(--c-text);font:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.btn-mini:hover{background:var(--c-bg)}
+.btn-mini:disabled{opacity:.5;cursor:not-allowed}
+
+/* Control segmentado (2 columnas por defecto; 3 con [data-theme-seg]) */
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--c-bg);border:1px solid var(--c-border);border-radius:10px;padding:3px}
+.seg button{border:0;background:none;color:var(--c-muted);font:inherit;font-size:13px;font-weight:550;padding:7px;border-radius:8px;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--c-ctl);color:var(--c-ctl-t)}
+
+/* Campos */
+.hexin{flex:1;min-width:0;border:1px solid var(--c-border);background:var(--c-bg);color:var(--c-text);border-radius:10px;padding:8px 10px;font:inherit;font-size:14px;font-family:ui-monospace,Menlo,Consolas,monospace}
+.hexin::placeholder{color:var(--c-muted);font-family:var(--font)}
+.hexin:focus{outline:2px solid var(--c-text);outline-offset:1px}
+.field{width:100%;border:1px solid var(--c-border);background:var(--c-bg);color:var(--c-text);border-radius:10px;padding:10px 12px;font:inherit;font-size:14px}
+.field::placeholder{color:var(--c-muted)}
+.field:focus{outline:2px solid var(--c-text);outline-offset:1px}
+textarea.field{min-height:96px;resize:vertical}

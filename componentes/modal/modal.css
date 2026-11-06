@@ -1,0 +1,36 @@
+/* ============================================================
+   Componente reutilizable: modal (backdrop + diálogo)
+   ============================================================
+   Uso:
+     <link rel="stylesheet" href="componentes/base/base.css">
+     <link rel="stylesheet" href="componentes/modal/modal.css">
+     <div class="modal-backdrop" id="miModalBackdrop" hidden>
+       <section class="modal" role="dialog" aria-modal="true" aria-labelledby="miTitulo">
+         <h2 id="miTitulo">Título</h2>
+         <p class="sub">Descripción</p>
+         ... contenido ...
+         <div class="actions">
+           <button class="btn-ghost" data-modal-cancel type="button">Cancelar</button>
+           <button class="btn-main" data-modal-ok type="button">Aceptar</button>
+         </div>
+       </section>
+     </div>
+     <script src="componentes/modal/modal.js"></script>
+
+   JS (global Modal, compatible con openModal/closeModal):
+     Modal.open("#miModalBackdrop", {focus: "#miModalBackdrop [data-modal-ok]"});
+     Modal.close("#miModalBackdrop");
+     Modal.attach("#miModalBackdrop", {onCancel: () => { /* abortar, limpiar pending */ }});
+
+   El backdrop (clic fuera) y Escape delegan a onCancel si existe,
+   si no cierran directamente. Solo actúa sobre modales con .open.
+   ============================================================ */
+
+.modal-backdrop{position:fixed;top:0;right:0;bottom:0;left:0;inset:0;background:rgba(0,0,0,.45);z-index:80;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-backdrop.open{display:flex}
+.modal{width:min(560px,100%);max-height:calc(100vh - 40px);overflow:auto;color:var(--c-text);border:1px solid color-mix(in srgb, var(--c-text) 18%, transparent);border-radius:14px;padding:20px;box-shadow:0 24px 60px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.18);backdrop-filter:blur(14px) saturate(1.4);-webkit-backdrop-filter:blur(14px) saturate(1.4);background:color-mix(in srgb, var(--c-panel) 82%, transparent)}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.modal{background:var(--c-panel)}}
+.modal h2{font-size:18px;margin:0 0 4px;letter-spacing:-.01em}
+.modal .sub{margin:0 0 14px;color:var(--c-muted);font-size:13px}
+.modal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.modal .actions .btn-main,.modal .actions .btn-ghost{width:auto;padding:9px 16px;margin-top:0}

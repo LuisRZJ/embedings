@@ -1,0 +1,62 @@
+<!-- ============================================================
+     Componente reutilizable: panel de ajustes de tema
+     Uso: <link rel="stylesheet" href="componentes/panel-tema/panel-tema.css">
+          <div data-theme-panel></div>
+          <script src="componentes/panel-tema/panel-tema.js"></script>
+     ============================================================ -->
+<div class="sheet-backdrop" data-sheet-backdrop></div>
+<section class="sheet" data-sheet aria-label="Ajustes de tema">
+  <div style="display:flex;justify-content:space-between;align-items:start;gap:10px;margin-bottom:14px">
+    <div>
+      <h2>Ajustes de tema</h2>
+      <p class="sub">Elige un tono y mira cómo cambia toda la página.</p>
+    </div>
+    <button class="btn-mini" data-close-sheet type="button" aria-label="Cerrar ajustes">✕</button>
+  </div>
+
+  <div class="grp">
+    <div class="lbl">Color base</div>
+    <div class="row">
+      <input class="hexin" data-hex value="#2f6bff" maxlength="7" spellcheck="false" aria-label="Color base en hexadecimal">
+      <button class="btn-mini" data-rnd style="padding:8px 14px" type="button">Aleatorio</button>
+    </div>
+  </div>
+
+  <div class="grp">
+    <label>Tono <span class="val" data-hv></span></label>
+    <input type="range" data-hue min="0" max="360" value="222">
+  </div>
+  <div class="grp">
+    <label>Saturación <span class="val" data-sv></span></label>
+    <input type="range" data-sat min="0" max="100" value="85">
+  </div>
+
+  <div class="grp">
+    <div class="lbl">Modo de la página</div>
+    <div class="seg" data-theme-seg>
+      <button type="button" data-theme-val="light" aria-pressed="true" aria-label="Claro" title="Claro"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg></button>
+      <button type="button" data-theme-val="dark" aria-pressed="false" aria-label="Oscuro" title="Oscuro"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
+      <button type="button" data-theme-val="auto" aria-pressed="false" aria-label="Automático" title="Automático"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" stroke="none"/></svg></button>
+    </div>
+    <p class="hint" data-auto-hint hidden>Automático: sigue la preferencia del dispositivo (claro u oscuro).</p>
+  </div>
+
+  <div class="grp">
+    <div class="lbl">Tonos rápidos</div>
+    <div class="tpresets" data-presets></div>
+  </div>
+
+  <div class="grp">
+    <div class="lbl">Escala generada <span class="val">clic = copiar</span></div>
+    <div class="scale" data-scale></div>
+    <div class="steps" data-steps></div>
+  </div>
+
+  <div class="grp">
+    <div class="lbl">Contraste (WCAG)</div>
+    <div class="checks" data-checks></div>
+  </div>
+
+  <button class="btn-main" data-copy type="button">Copiar variables CSS</button>
+  <button class="btn-ghost" data-reset type="button">Restablecer (Grafito)</button>
+</section>

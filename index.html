@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Clasifica por significado, no por palabras clave.</title>
+<meta name="theme-color" content="#f6f6f4">
+<link rel="icon" type="image/svg+xml" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="%23161616"/><g fill="%238f8f8a"><circle cx="19" cy="22" r="5"/><circle cx="28" cy="36" r="5"/><circle cx="18" cy="47" r="5"/></g><g fill="%23f4f4f1"><circle cx="46" cy="24" r="5"/><circle cx="41" cy="40" r="5"/><circle cx="50" cy="49" r="5"/></g></svg>'>
+<link rel="apple-touch-icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="%23161616"/><g fill="%238f8f8a"><circle cx="19" cy="22" r="5"/><circle cx="28" cy="36" r="5"/><circle cx="18" cy="47" r="5"/></g><g fill="%23f4f4f1"><circle cx="46" cy="24" r="5"/><circle cx="41" cy="40" r="5"/><circle cx="50" cy="49" r="5"/></g></svg>'>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="componentes/base/base.css">
+<link rel="stylesheet" href="componentes/panel-tema/panel-tema.css">
+<link rel="stylesheet" href="componentes/toast/toast.css">
+<link rel="stylesheet" href="componentes/navegacion/navegacion.css">
+<link rel="stylesheet" href="componentes/perfil-sync/perfil-sync.css">
+<script src="componentes/navegacion/navegacion-boot.js"></script>
+<style>
+/* Solo estilos propios de esta página. Lo compartido vive en base.css. */
+.app{max-width:880px;margin:0 auto;padding:20px}
+.hero{padding:10px 4px 20px}
+.hero h2{font-size:clamp(30px,4.6vw,48px);line-height:1.04;letter-spacing:-.035em;margin:0 0 12px;font-weight:700}
+.hero p{font-size:16px;color:var(--c-muted);margin:0;max-width:62ch}
+.card{background:var(--c-panel);border:1px solid var(--c-border);border-radius:14px;padding:22px;margin-bottom:16px}
+.card h2{font-size:18px;margin:0 0 4px;letter-spacing:-.02em}
+.card .desc{margin:0 0 16px;color:var(--c-muted);font-size:14px}
+.module{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--c-border);background:var(--c-bg);border-radius:12px;padding:16px;text-decoration:none}
+.module:hover{border-color:var(--c-text)}
+.module b{display:block;font-size:15px}
+.module span{display:block;font-size:13px;color:var(--c-muted);margin-top:2px}
+.module .arrow{flex:0 0 auto;font-size:18px}
+.foot{border-top:1px solid var(--c-border);padding:18px 4px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;font-size:13px;color:var(--c-muted)}
+.foot a{color:var(--c-text);text-decoration:none;font-weight:550}
+.topbar{display:flex;justify-content:flex-end;margin-bottom:8px}
+.topbar .btn-ghost{width:auto;padding:9px 14px}
+@media (max-width:640px){.app{padding:12px}}
+</style>
+</head>
+<body>
+<div class="nav-veil" aria-hidden="true"><span class="nav-veil-icon"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#161616"/><g fill="#8f8f8a"><circle cx="19" cy="22" r="5"/><circle cx="28" cy="36" r="5"/><circle cx="18" cy="47" r="5"/></g><g fill="#f4f4f1"><circle cx="46" cy="24" r="5"/><circle cx="41" cy="40" r="5"/><circle cx="50" cy="49" r="5"/></g></svg></span></div>
+<div class="app">
+  <main>
+    <div class="topbar">
+      <button class="btn-ghost" type="button" data-open-theme>⚙ Ajustes de tema</button>
+    </div>
+    <section class="hero">
+      <h2>Clasifica por significado, no por palabras clave.</h2>
+      <p>Sistema de clasificación semántica con embeddings y LLM. Elige un módulo para empezar.</p>
+    </section>
+
+    <section class="card">
+      <h2>Módulos del sistema</h2>
+      <p class="desc">Módulos disponibles.</p>
+      <a class="module" href="zona-pruebas.html" style="margin-bottom:10px">
+        <span><b>Zona de pruebas</b><span>Entorno experimental para probar modelos de embedding y LLM.</span></span>
+        <span class="arrow" aria-hidden="true">→</span>
+      </a>
+      <a class="module" href="ajustes-perfil.html">
+        <span><b>Ajustes y perfil</b><span>Configuración y datos del usuario.</span></span>
+        <span class="arrow" aria-hidden="true">→</span>
+      </a>
+    </section>
+
+    <footer class="foot">
+      <span>Clasificador semántico</span>
+      <span><a href="zona-pruebas.html">Zona de pruebas ↗</a> · <a href="ajustes-perfil.html">Ajustes y perfil ↗</a></span>
+    </footer>
+  </main>
+</div>
+<div data-theme-panel></div>
+<div data-toast-root></div>
+<script src="componentes/panel-tema/panel-tema.js"></script>
+<script src="componentes/toast/toast.js"></script>
+<script src="componentes/navegacion/navegacion.js"></script>
+<script src="componentes/perfil-sync/perfil-sync.js"></script>
+<script>
+if (window.PerfilSync) {
+  window.PerfilSync.init();
+}
+</script>
+</body>
+</html>

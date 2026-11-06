@@ -1,0 +1,1789 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Zona de pruebas · Clasificador con Embeddings · OpenRouter</title>
+<meta name="theme-color" content="#f6f6f4">
+<link rel="icon" type="image/svg+xml" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="%23161616"/><g fill="%238f8f8a"><circle cx="19" cy="22" r="5"/><circle cx="28" cy="36" r="5"/><circle cx="18" cy="47" r="5"/></g><g fill="%23f4f4f1"><circle cx="46" cy="24" r="5"/><circle cx="41" cy="40" r="5"/><circle cx="50" cy="49" r="5"/></g></svg>'>
+<link rel="apple-touch-icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="%23161616"/><g fill="%238f8f8a"><circle cx="19" cy="22" r="5"/><circle cx="28" cy="36" r="5"/><circle cx="18" cy="47" r="5"/></g><g fill="%23f4f4f1"><circle cx="46" cy="24" r="5"/><circle cx="41" cy="40" r="5"/><circle cx="50" cy="49" r="5"/></g></svg>'>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="componentes/base/base.css">
+<link rel="stylesheet" href="componentes/panel-tema/panel-tema.css">
+<link rel="stylesheet" href="componentes/modal/modal.css">
+<link rel="stylesheet" href="componentes/toast/toast.css">
+<link rel="stylesheet" href="componentes/collapsible/collapsible.css">
+<link rel="stylesheet" href="componentes/navegacion/navegacion.css">
+<link rel="stylesheet" href="componentes/model-select/model-select.css">
+<link rel="stylesheet" href="componentes/perfil-sync/perfil-sync.css">
+<script src="componentes/navegacion/navegacion-boot.js"></script>
+<style>
+/* Solo estilos propios de esta página. Lo compartido vive en base.css,
+   lo del sheet en panel-tema.css y lo del modal en modal.css. */
+/* Crítico: si modal.css falla/caché, el overlay nunca cae en flujo. */
+.modal-backdrop{position:fixed;top:0;right:0;bottom:0;left:0;inset:0;background:rgba(0,0,0,.45);z-index:80;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-backdrop.open{display:flex}
+.modal{width:min(560px,100%);max-height:calc(100vh - 40px);overflow:auto;color:var(--c-text);border:1px solid color-mix(in srgb, var(--c-text) 18%, transparent);border-radius:14px;padding:20px;box-shadow:0 24px 60px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.18);backdrop-filter:blur(14px) saturate(1.4);-webkit-backdrop-filter:blur(14px) saturate(1.4);background:color-mix(in srgb, var(--c-panel) 82%, transparent)}
+.modal h2{font-size:18px;margin:0 0 4px;letter-spacing:-.01em}
+.modal .sub{margin:0 0 14px;color:var(--c-muted);font-size:13px}
+.modal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.modal .actions .btn-main,.modal .actions .btn-ghost{width:auto;padding:9px 16px;margin-top:0}
+/* Tokens y reset: base.css */
+.app{display:grid;grid-template-columns:320px minmax(0,1fr);gap:20px;max-width:1320px;margin:0 auto;padding:20px}
+.panel{background:var(--c-panel);border:1px solid var(--c-border);border-radius:14px;padding:20px;align-self:start;position:sticky;top:20px}
+/* Formularios y botones: base.css */
+/* Scrollbar: base.css */
+/* Controles del panel de tema: panel-tema.css */
+/* Panel de ajustes (sheet): panel-tema.css */
+
+/* Contenido principal */
+.hero{padding:10px 4px 20px}
+.hero h2{font-size:clamp(30px,4.6vw,48px);line-height:1.04;letter-spacing:-.035em;margin:0 0 12px;font-weight:700}
+.hero p{font-size:16px;color:var(--c-muted);margin:0;max-width:62ch}
+.card{background:var(--c-panel);border:1px solid var(--c-border);border-radius:14px;padding:22px;margin-bottom:16px}
+.card h2{font-size:18px;margin:0 0 4px;letter-spacing:-.02em}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.card-head h2{margin:0;display:flex;align-items:center;gap:8px}
+.count{font-size:12px;font-weight:600;color:var(--c-muted);border:1px solid var(--c-border);border-radius:99px;padding:1px 9px;font-variant-numeric:tabular-nums}
+/* .collapse-btn/.collapsible: collapsible.css */
+.card .desc{margin:0 0 16px;color:var(--c-muted);font-size:14px}
+.card .desc code{background:var(--c-bg);border:1px solid var(--c-border);padding:1px 6px;border-radius:6px;font-size:12px}
+.presets{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.presets .plbl{font-size:13px;color:var(--c-muted)}
+.pill{border:1px solid var(--c-border);background:var(--c-panel);color:var(--c-text);padding:7px 13px;border-radius:99px;cursor:pointer;font:inherit;font-size:13px;font-weight:550}
+.pill:hover{background:var(--c-bg)}
+.category{border:1px solid var(--c-border);background:var(--c-bg);border-radius:10px;padding:12px;margin-bottom:10px}
+.category .head{display:flex;gap:8px;align-items:center}
+.category .head b{color:var(--c-muted);font-size:13px}
+.category .head input{flex:1;min-width:0}
+.category textarea{min-height:60px;margin-top:8px}
+.category .del{border:1px solid var(--c-border);background:var(--c-panel);color:var(--c-text);width:34px;height:34px;border-radius:10px;cursor:pointer;font:inherit}
+.category .del:hover{background:var(--c-border)}
+/* .category .cat-toggle: collapsible.css */
+.category .ai-btn{flex:0 0 auto;width:34px;height:34px;border:1px solid var(--c-border);background:var(--c-panel);color:var(--c-text);border-radius:10px;display:grid;place-items:center;padding:0;cursor:pointer;font-size:15px}
+.category .ai-btn:hover{background:var(--c-bg)}
+.category .ai-btn:disabled{opacity:.5;cursor:not-allowed}
+.gen{border:1px dashed var(--c-border);background:var(--c-bg);border-radius:10px;padding:12px;margin-bottom:12px}
+.gen-head{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;font-weight:600;cursor:pointer;user-select:none}
+.gen-head .val{font-weight:400;color:var(--c-muted);font-size:12px;white-space:nowrap}
+.gen-right{display:flex;align-items:center;gap:8px}
+/* .gen-toggle: collapsible.css */
+#genBody .collapsible-in{padding-top:8px}
+.gen .field{background:var(--c-panel)}
+.gen .field:focus{outline-offset:-1px}
+.gen .gen-count{flex:0 0 78px;max-width:78px;text-align:center;font-variant-numeric:tabular-nums}
+
+/* Entrada con imágenes */
+.seg-sm{width:176px;flex:0 0 auto}
+#textPane .desc,#imagePane .desc{margin-top:12px}
+.seg-sm button{padding:5px;font-size:12.5px}
+.drop{border:1px dashed var(--c-border);background:var(--c-bg);border-radius:12px;padding:18px 14px;text-align:center;display:flex;flex-direction:column;gap:4px;align-items:center;cursor:pointer;transition:border-color .15s,background .15s}
+.drop:hover,.drop.over{border-color:var(--c-text);background:var(--c-panel)}
+.drop b{font-size:14px;letter-spacing:-.01em}
+.drop span{font-size:12.5px;color:var(--c-muted)}
+.linklike{color:var(--c-text);font-weight:600;text-decoration:underline;cursor:pointer}
+.thumbs{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.thumb{position:relative;width:76px;height:76px;border-radius:10px;overflow:hidden;border:1px solid var(--c-border);background:var(--c-bg)}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb button{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;border:0;background:rgba(0,0,0,.65);color:#fff;font-size:11px;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0}
+.thumb button:hover{background:#000}
+.thumb .nm{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.62);color:#fff;font-size:9.5px;padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cat-img{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
+.cat-thumb{width:46px;height:46px;object-fit:cover;border-radius:8px;border:1px solid var(--c-border);display:block}
+.result-thumb{width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--c-border);display:block;margin-bottom:8px}
+.status{margin-top:12px;padding:11px 12px;border-radius:10px;font-size:13px;display:none;white-space:pre-wrap;word-break:break-word}
+.status.ok{display:block;background:var(--c-bg);border:1px solid var(--c-border);color:var(--c-text)}
+.status.err{display:block;background:var(--c-bg);border:1px solid var(--c-text);color:var(--c-text)}
+.status.info{display:block;background:var(--c-bg);border:1px solid var(--c-border);color:var(--c-muted)}
+.result{border:1px solid var(--c-border);background:var(--c-bg);border-radius:10px;padding:14px;margin-bottom:12px}
+.result .text{font-weight:650;margin-bottom:6px;word-break:break-word;letter-spacing:-.01em}
+.result .pred{font-size:14px}
+.scores{margin-top:12px}
+.score-row{display:grid;grid-template-columns:150px 1fr 74px;gap:10px;align-items:center;font-size:13px;margin:6px 0}
+.score-row .num{font-variant-numeric:tabular-nums;color:var(--c-muted);text-align:right}
+.score-row.winner .catname{font-weight:700}
+.bar{height:10px;background:var(--c-panel);border:1px solid var(--c-border);border-radius:99px;overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--c-muted);border-radius:99px;transition:width .3s}
+.score-row.winner .bar>i{background:var(--c-text)}
+.meta{font-size:12px;color:var(--c-muted);margin-top:8px}
+details.raw{margin-top:10px}
+details.raw summary{cursor:pointer;font-size:13px;font-weight:550}
+pre{background:var(--c-panel);border:1px solid var(--c-border);border-radius:10px;padding:10px;overflow:auto;font-size:12px;max-height:220px}
+.foot{border-top:1px solid var(--c-border);padding:18px 4px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;font-size:13px;color:var(--c-muted)}
+.foot a{color:var(--c-text);text-decoration:none;font-weight:550}
+.foot code{background:var(--c-panel);border:1px solid var(--c-border);padding:1px 6px;border-radius:6px;font-size:12px}
+/* Toast: toast.css */
+/* Modal genérico: modal.css */
+.diff-box{border:1px solid var(--c-border);border-radius:10px;overflow:hidden;font-size:13px}
+.diff-box .diff-head{display:flex;justify-content:space-between;gap:8px;padding:8px 12px;background:var(--c-bg);border-bottom:1px solid var(--c-border);font-weight:600}
+.diff-box pre{margin:0;border:0;border-radius:0;max-height:260px;white-space:pre-wrap;word-break:break-word}
+.diff-box .old{color:var(--c-muted);text-decoration:line-through}
+.diff-box .new{font-weight:600}
+/* Progreso de generación en tiempo real */
+.progress-status{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--c-muted);margin:0 0 10px}
+.spinner{flex:0 0 auto;width:16px;height:16px;border-radius:50%;border:2px solid var(--c-border);border-top-color:var(--c-text);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spinner{animation:none}}
+.progress-log{border:1px solid var(--c-border);border-radius:10px;background:var(--c-bg);padding:10px 12px;font-size:12.5px;max-height:220px;overflow:auto;white-space:pre-wrap;word-break:break-word}
+.progress-log .line{padding:2px 0;border-bottom:1px dashed var(--c-border)}
+.progress-log .line:last-child{border-bottom:0}
+.progress-log .t{color:var(--c-muted);font-variant-numeric:tabular-nums;margin-right:6px}
+.progress-log .think{color:var(--c-muted);font-style:italic}
+.progress-log .err{color:#c0392b;font-weight:600}
+.progress-bar{height:6px;border-radius:99px;background:var(--c-bg);border:1px solid var(--c-border);overflow:hidden;margin:10px 0 0}
+.progress-bar>i{display:block;height:100%;width:0;background:var(--c-text);transition:width .3s}
+.progress-meta{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--c-muted);margin-top:6px;font-variant-numeric:tabular-nums}
+/* Casilla estilizada de razonamiento */
+.reason-toggle{display:flex;align-items:center;gap:10px;border:1px solid var(--c-border);border-radius:10px;padding:10px 12px;margin:0 0 14px;cursor:pointer;background:var(--c-bg);position:relative}
+.reason-toggle input{position:absolute;opacity:0;width:0;height:0}
+.reason-toggle .box{flex:0 0 auto;width:20px;height:20px;border-radius:6px;border:1.5px solid var(--c-border);background:var(--c-panel);display:grid;place-items:center;transition:background .15s,border-color .15s}
+.reason-toggle .box svg{width:12px;height:12px;opacity:0;transform:scale(.6);transition:opacity .15s,transform .15s}
+.reason-toggle input:checked + .box{background:var(--c-ctl);border-color:var(--c-ctl)}
+.reason-toggle input:checked + .box svg{opacity:1;transform:scale(1)}
+.reason-toggle input:focus-visible + .box{outline:2px solid var(--c-text);outline-offset:2px}
+.reason-toggle .txt{flex:1;min-width:0}
+.reason-toggle .txt b{display:block;font-size:13px;font-weight:650}
+.reason-toggle .txt span{display:block;font-size:12px;color:var(--c-muted)}
+.reason-toggle .badge{flex:0 0 auto}
+/* [hidden]: base.css */
+/* Selector de método de clasificación */
+.method-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 6px}
+.method-card{border:1px solid var(--c-border);border-radius:12px;padding:14px;background:var(--c-bg);cursor:pointer;text-align:left;font:inherit;color:var(--c-text)}
+.method-card:hover{border-color:var(--c-text)}
+.method-card b{display:block;font-size:14px;margin-bottom:4px}
+.method-card span{display:block;font-size:12.5px;color:var(--c-muted);line-height:1.45}
+.method-card .tag{display:inline-block;margin-top:8px;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--c-ctl);color:var(--c-ctl-t)}
+@media (max-width:980px){.app{grid-template-columns:1fr}.panel{position:static}}
+@media (max-width:640px){.app{padding:12px}.score-row{grid-template-columns:110px 1fr 64px}}
+@media (max-width:480px){.card-head{flex-wrap:wrap}.seg-sm{width:100%}}
+@media (prefers-reduced-motion:reduce){.bar>i{transition:none}}
+</style>
+</head>
+<body>
+<div class="nav-veil" aria-hidden="true"><span class="nav-veil-icon"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#161616"/><g fill="#8f8f8a"><circle cx="19" cy="22" r="5"/><circle cx="28" cy="36" r="5"/><circle cx="18" cy="47" r="5"/></g><g fill="#f4f4f1"><circle cx="46" cy="24" r="5"/><circle cx="41" cy="40" r="5"/><circle cx="50" cy="49" r="5"/></g></svg></span></div>
+<div class="app">
+
+  <!-- ===== Panel de controles ===== -->
+  <aside class="panel" aria-label="Controles de conexión">
+    <a class="btn-ghost" href="index.html" style="display:block;text-align:center;text-decoration:none;margin-bottom:8px">← Volver</a>
+    <button class="btn-ghost" type="button" data-open-theme style="margin-top:0;margin-bottom:18px">⚙ Ajustes de tema</button>
+
+    <div class="grp">
+      <label for="apiKey">Clave de OpenRouter <span class="val"><a href="https://openrouter.ai/keys" target="_blank" rel="noopener">Crear clave ↗</a></span></label>
+      <div class="row">
+        <input class="hexin" id="apiKey" type="password" placeholder="sk-or-v1-..." autocomplete="off" spellcheck="false" aria-label="Clave de API de OpenRouter">
+        <button class="btn-mini" id="toggleKey" type="button">Mostrar</button>
+      </div>
+    </div>
+
+    <div class="grp">
+      <label for="modelId">ID del modelo <span class="val"><a href="https://openrouter.ai/models?filter=embeddings" target="_blank" rel="noopener">Ver modelos ↗</a></span></label>
+      <div class="model-field" data-model-type="embeddings">
+        <input class="hexin" id="modelId" data-model-type="embeddings" type="text" placeholder="openai/text-embedding-3-small" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="modelId-list" aria-autocomplete="list">
+        <button class="model-toggle" type="button" tabindex="-1" aria-label="Ver modelos" aria-expanded="false"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        <div class="model-list" id="modelId-list" role="listbox" aria-label="Modelos de embeddings" hidden></div>
+      </div>
+    </div>
+
+    <div class="grp">
+      <label for="genModelId">ID del modelo generador <span class="val">crear categorías</span></label>
+      <div class="model-field" data-model-type="chat">
+        <input class="hexin" id="genModelId" data-model-type="chat" type="text" placeholder="openai/gpt-4o-mini" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="genModelId-list" aria-autocomplete="list">
+        <button class="model-toggle" type="button" tabindex="-1" aria-label="Ver modelos" aria-expanded="false"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        <div class="model-list" id="genModelId-list" role="listbox" aria-label="Modelos de chat" hidden></div>
+      </div>
+    </div>
+
+    <div class="grp">
+      <div class="lbl">Modo de clasificar</div>
+      <div class="seg" id="modeSeg">
+        <button type="button" data-mode="single" aria-pressed="true">Texto único</button>
+        <button type="button" data-mode="batch" aria-pressed="false">Lote</button>
+      </div>
+    </div>
+
+    <div class="grp">
+      <label for="dimensions">Dimensiones <span class="val">opcional</span></label>
+      <input class="hexin" id="dimensions" placeholder="ej. 512 · vacío = defecto" inputmode="numeric">
+    </div>
+
+  </aside>
+
+  <!-- ===== Contenido principal ===== -->
+  <main>
+    <section class="hero">
+      <h2>Zona de pruebas</h2>
+      <p>Entorno experimental para probar modelos de embedding y LLM antes de construir un clasificador real. Define categorías con ejemplos, escribe un texto y descubre a cuál se parece más según su vector o según el criterio del modelo.</p>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h2>Categorías <span class="count" id="catCount" hidden></span></h2>
+        <button class="collapse-btn" id="catToggle" type="button" aria-expanded="true" aria-controls="catBody" title="Colapsar categorías" aria-label="Colapsar categorías">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+      </div>
+      <div class="collapsible" id="catBody">
+        <div class="collapsible-in">
+          <p class="desc">Al menos 2. Cada categoría se convierte en un prototipo con el texto <code>Nombre. Descripción / ejemplos</code>. Cuanto más representativa sea la descripción, mejor clasificará.</p>
+          <div class="presets">
+            <span class="plbl">Plantillas:</span>
+            <button class="pill" data-preset="sentimiento" type="button">Sentimiento</button>
+            <button class="pill" data-preset="temas" type="button">Temas</button>
+            <button class="pill" data-preset="soporte" type="button">Soporte</button>
+            <button class="pill" data-preset="spam" type="button">Spam</button>
+          </div>
+          <div class="gen">
+            <div class="gen-head" id="genHead">
+              <span class="gen-title">Generar categorías con IA</span>
+              <span class="gen-right">
+                <span class="val">se suman a las existentes</span>
+                <button class="gen-toggle" id="genToggle" type="button" aria-expanded="true" aria-controls="genBody" title="Colapsar" aria-label="Colapsar generación con IA">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
+              </span>
+            </div>
+            <div class="collapsible" id="genBody">
+              <div class="collapsible-in">
+                <div class="row">
+                  <input class="field" id="genTopic" type="text" placeholder="¿Sobre qué deben ser? Ej. tipos de incidencias de soporte" aria-label="Tema de las categorías a generar">
+                  <input class="field gen-count" id="genCount" type="number" min="1" max="30" step="1" placeholder="3" aria-label="Cantidad de categorías a generar" title="Cantidad (3 por defecto)">
+                </div>
+                <button class="btn-mini" id="genBtn" type="button" style="margin-top:8px">✦ Generar</button>
+              </div>
+            </div>
+          </div>
+          <div id="categories"></div>
+          <button class="btn-mini" id="addCatBtn" type="button">+ Añadir categoría</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h2>Entrada a clasificar</h2>
+        <div class="seg seg-sm" id="inputTypeSeg">
+          <button type="button" data-it="text" aria-pressed="true">Texto</button>
+          <button type="button" data-it="image" aria-pressed="false">Imagen</button>
+        </div>
+      </div>
+
+      <div id="textPane">
+        <p class="desc">En modo <b>Texto único</b> clasifica un solo texto. En modo <b>Lote</b>, cada línea es un texto independiente.</p>
+        <label for="inputText" style="display:block;font-size:13px;font-weight:550;margin-bottom:8px">Texto</label>
+        <textarea class="field" id="inputText" placeholder="Escribe aquí el texto que quieres clasificar..."></textarea>
+      </div>
+
+      <div id="imagePane" hidden>
+        <p class="desc">Cada imagen se compara con el prototipo de cada categoría. Necesitas un modelo multimodal de embeddings (ej. <code>google/gemini-embedding-2</code>, <code>cohere/embed-5-fast</code>, <code>mongodb/voyage-multimodal-3.5</code>); si una categoría tiene imagen de prototipo, se usa esa imagen en lugar del texto.</p>
+        <div class="drop" id="dropZone" tabindex="0" role="button" aria-label="Añadir imágenes para clasificar">
+          <b>Arrastra imágenes aquí</b>
+          <span>o <label class="linklike" for="imageInput">elige archivos</label> · también puedes pegar con Ctrl+V</span>
+          <input id="imageInput" type="file" accept="image/*" multiple hidden>
+        </div>
+        <div class="thumbs" id="thumbs"></div>
+      </div>
+
+      <div class="row" style="margin-top:12px">
+        <button class="btn-main" id="classifyBtn" type="button" style="flex:1">Clasificar →</button>
+        <button class="btn-mini" id="exampleBtn" type="button" style="padding:10px 16px">Cargar ejemplo</button>
+      </div>
+    </section>
+
+    <section class="card" id="resultsCard" hidden>
+      <h2>Resultados</h2>
+      <p class="desc" id="resultsMeta"></p>
+      <div id="results"></div>
+      <button class="btn-ghost" id="copyJsonBtn" type="button" style="margin-top:4px">Copiar resultados (JSON)</button>
+    </section>
+
+    <footer class="foot">
+      <span>Endpoint: <code>POST openrouter.ai/api/v1/embeddings</code></span>
+      <a href="https://openrouter.ai/docs/api-reference/embeddings" target="_blank" rel="noopener">Documentación ↗</a>
+    </footer>
+  </main>
+</div>
+
+<!-- ===== Panel de ajustes de tema (componente reutilizable) ===== -->
+<div data-theme-panel></div>
+
+<!-- ===== Notificaciones (componente reutilizable toast) ===== -->
+<div data-toast-root></div>
+<input id="catImageInput" type="file" accept="image/*" hidden>
+
+<!-- ===== Modal: confirmar generación de ejemplos ===== -->
+<div class="modal-backdrop" id="confirmGenBackdrop" hidden>
+  <section class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmGenTitle">
+    <h2 id="confirmGenTitle">✦ Generar ejemplos con IA</h2>
+    <p class="sub" id="confirmGenText"></p>
+    <label class="reason-toggle" id="reasonToggle" hidden>
+      <input type="checkbox" id="reasonCheck" checked>
+      <span class="box" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
+      <span class="txt"><b>Razonamiento del modelo</b><span id="reasonHint">Activado: el modelo puede pensar antes de responder.</span></span>
+      <span class="badge" id="reasonBadge">detectado</span>
+    </label>
+    <div id="genProgress" hidden>
+      <div class="progress-status"><span class="spinner" aria-hidden="true"></span><span id="genStatus">Conectando con OpenRouter…</span></div>
+      <div class="progress-log" id="genLog" aria-live="polite"></div>
+      <div class="progress-bar"><i id="genBar"></i></div>
+      <div class="progress-meta"><span id="genElapsed">0.0 s</span><span id="genTokens"></span></div>
+      <p class="hint" style="margin-top:8px">Límites: 4000 tokens · 4000 caracteres · 2000 fragmentos · 60 s total · 15 s sin tokens.</p>
+    </div>
+    <div class="actions">
+      <button class="btn-ghost" id="confirmGenCancel" type="button">Cancelar</button>
+      <button class="btn-main" id="confirmGenOk" type="button">Generar</button>
+    </div>
+  </section>
+</div>
+
+<!-- ===== Modal: elegir método de clasificación ===== -->
+<div class="modal-backdrop" id="methodBackdrop" hidden>
+  <section class="modal" role="dialog" aria-modal="true" aria-labelledby="methodTitle">
+    <h2 id="methodTitle">¿Cómo quieres clasificar?</h2>
+    <p class="sub">Elige el método para esta clasificación. Puedes cambiarlo en cada intento.</p>
+    <div class="method-grid">
+      <button class="method-card" id="methodEmbed" type="button">
+        <b>Embedding</b>
+        <span>Compara vectores por similitud de coseno. Rápido y con puntuaciones por categoría.</span>
+        <span class="tag" id="methodEmbedTag">modelo de embedding</span>
+      </button>
+      <button class="method-card" id="methodLlm" type="button">
+        <b>LLM</b>
+        <span>El modelo generador lee las categorías y el texto y decide directamente.</span>
+        <span class="tag" id="methodLlmTag">modelo generador</span>
+      </button>
+    </div>
+    <div class="actions">
+      <button class="btn-ghost" id="methodCancel" type="button">Cancelar</button>
+    </div>
+  </section>
+</div>
+
+<!-- ===== Modal: confirmar o rechazar el diff ===== -->
+<div class="modal-backdrop" id="diffBackdrop" hidden>
+  <section class="modal" role="dialog" aria-modal="true" aria-labelledby="diffTitle">
+    <h2 id="diffTitle">Revisar cambios</h2>
+    <p class="sub" id="diffSub"></p>
+    <div class="diff-box">
+      <div class="diff-head"><span>Descripción / ejemplos</span><span id="diffMeta"></span></div>
+      <pre id="diffOld" class="old"></pre>
+      <pre id="diffNew" class="new"></pre>
+    </div>
+    <div class="actions">
+      <button class="btn-ghost" id="diffReject" type="button">Rechazar</button>
+      <button class="btn-main" id="diffAccept" type="button">Aceptar cambios</button>
+    </div>
+  </section>
+</div>
+
+<script src="componentes/panel-tema/panel-tema.js"></script>
+<script src="componentes/modal/modal.js"></script>
+<script src="componentes/toast/toast.js"></script>
+<script src="componentes/collapsible/collapsible.js"></script>
+<script src="componentes/navegacion/navegacion.js"></script>
+<script src="componentes/model-select/model-select.js"></script>
+<script src="componentes/perfil-sync/perfil-sync.js"></script>
+<script>
+"use strict";
+/* Compatible con ambos estilos: $("id") de la web de ejemplo y $("#id") del clasificador */
+const $ = s => document.querySelector(s[0]==="#"||s[0]==="." ? s : "#"+s);
+const $$ = s => [...document.querySelectorAll(s)];
+
+/* ============================================================
+   Clasificador con embeddings (lógica reutilizada)
+   ============================================================ */
+const DEFAULT_CATEGORIES = [
+  { name: "Positivo", proto: "comentario positivo, contento, satisfecho, buena experiencia, excelente, me gusta, muy bueno, recomiendo" },
+  { name: "Negativo", proto: "comentario negativo, enojado, insatisfecho, mala experiencia, horrible, decepcionado, pésimo, no recomiendo" },
+  { name: "Neutral", proto: "comentario neutral, objetivo, informativo, sin emoción, factual, descripción simple sin opinión" }
+];
+const PRESETS = {
+  sentimiento: DEFAULT_CATEGORIES,
+  temas: [
+    { name: "Tecnología", proto: "tecnología, computadoras, software, inteligencia artificial, smartphones, programación, gadgets" },
+    { name: "Deportes", proto: "deportes, fútbol, baloncesto, tenis, carreras, gimnasio, equipos, partidos, atletas" },
+    { name: "Cocina", proto: "cocina, recetas, comida, ingredientes, hornear, restaurantes, sabores, chef" },
+    { name: "Finanzas", proto: "finanzas, dinero, inversiones, bolsa, bancos, impuestos, presupuestos, negocios" },
+    { name: "Salud", proto: "salud, médicos, ejercicio, nutrición, enfermedades, bienestar, hospitales, síntomas" }
+  ],
+  soporte: [
+    { name: "Ayuda técnica", proto: "ayuda técnica, error, problema técnico, no funciona, bug, contraseña, acceso, soporte técnico" },
+    { name: "Facturación", proto: "facturación, pago, cobrar, factura, suscripción, precio, reembolso, tarjeta" },
+    { name: "Cancelación", proto: "cancelar, cancelar cuenta, darse de baja, eliminar cuenta, terminar suscripción" },
+    { name: "Ventas", proto: "comprar, ventas, precios, ofertas, planes, contratar, información comercial" }
+  ],
+  spam: [
+    { name: "Spam", proto: "spam, oferta increíble, ganar dinero rápido, premio, click aquí, gratis, urgencia, promociones no deseadas" },
+    { name: "No spam", proto: "mensaje legítimo, comunicación personal o laboral normal, sin ofertas engañosas, conversación real" }
+  ]
+};
+
+let categories = [];
+let lastResults = null;
+let mode = "single";
+let inputType = "text";      /* "text" | "image" */
+let images = [];             /* imágenes a clasificar (en memoria) */
+let pendingCatImage = -1;    /* categoría esperando una imagen de prototipo */
+
+/* Redimensiona y comprime la imagen para no enviar archivos enormes */
+function fileToEmbeddingImage(file){
+  return new Promise((resolve, reject)=>{
+    if(!file || !file.type.startsWith("image/")) return reject(new Error("El archivo no es una imagen."));
+    const MAX = 1024;
+    const fr = new FileReader();
+    fr.onerror = ()=> reject(new Error("No se pudo leer el archivo."));
+    fr.onload = ()=>{
+      const img = new Image();
+      img.onerror = ()=> reject(new Error("Formato de imagen no soportado."));
+      img.onload = ()=>{
+        const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+        const w = Math.max(1, Math.round(img.width * scale));
+        const h = Math.max(1, Math.round(img.height * scale));
+        const c = document.createElement("canvas");
+        c.width = w; c.height = h;
+        const ctx = c.getContext("2d");
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0,0,w,h);
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(c.toDataURL("image/jpeg", 0.85));
+      };
+      img.src = fr.result;
+    };
+    fr.readAsDataURL(file);
+  });
+}
+
+function setSeg(containerId, value){
+  $$(`#${containerId} button`).forEach(b=> b.setAttribute("aria-pressed", String(b.dataset.mode === value)));
+}
+$("#modeSeg").addEventListener("click", e=>{
+  const b = e.target.closest("button"); if(!b) return;
+  mode = b.dataset.mode; setSeg("modeSeg", mode); saveSettings(false);
+});
+
+function escapeHtml(s){ return (s||"").replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
+
+/* ---------- Tipo de entrada: texto o imagen ---------- */
+function setInputType(t){
+  inputType = t === "image" ? "image" : "text";
+  $$("#inputTypeSeg button").forEach(b=> b.setAttribute("aria-pressed", String(b.dataset.it === inputType)));
+  $("#textPane").hidden = inputType !== "text";
+  $("#imagePane").hidden = inputType !== "image";
+  $("#classifyBtn").textContent = inputType === "image" ? "Clasificar imágenes →" : "Clasificar →";
+  $("#exampleBtn").textContent = inputType === "image" ? "Imágenes de ejemplo" : "Cargar ejemplo";
+}
+$("#inputTypeSeg").addEventListener("click", e=>{
+  const b = e.target.closest("button"); if(!b) return;
+  setInputType(b.dataset.it);
+  saveSettings();
+});
+
+/* ---------- Imágenes a clasificar ---------- */
+function renderThumbs(){
+  const box = $("#thumbs");
+  box.innerHTML = "";
+  images.forEach((im, i)=>{
+    const d = document.createElement("div");
+    d.className = "thumb";
+    d.innerHTML = `<img src="${im.dataUrl}" alt="${escapeHtml(im.name)}">
+      <button type="button" aria-label="Quitar ${escapeHtml(im.name)}">✕</button>
+      <span class="nm">${escapeHtml(im.name)}</span>`;
+    d.querySelector("button").addEventListener("click", ()=>{ images.splice(i,1); renderThumbs(); });
+    box.appendChild(d);
+  });
+}
+async function addImageFiles(fileList){
+  const files = [...fileList].filter(f=> f && f.type.startsWith("image/"));
+  if(!files.length) return;
+  for(const f of files){
+    try{
+      const dataUrl = await fileToEmbeddingImage(f);
+      images.push({ dataUrl, name: f.name || `imagen-${images.length + 1}` });
+    }catch(err){
+      showToast("No se pudo procesar una imagen", err.message);
+    }
+  }
+  renderThumbs();
+}
+
+$("#dropZone").addEventListener("click", e=>{
+  if(e.target.closest("label")) return;   /* el label ya abre el selector */
+  $("#imageInput").click();
+});
+$("#dropZone").addEventListener("keydown", e=>{
+  if(e.key === "Enter" || e.key === " "){ e.preventDefault(); $("#imageInput").click(); }
+});
+$("#imageInput").addEventListener("change", e=>{
+  addImageFiles(e.target.files);
+  e.target.value = "";
+});
+let _dragDepth = 0;
+["dragenter","dragover"].forEach(ev=> $("#dropZone").addEventListener(ev, e=>{
+  e.preventDefault(); _dragDepth++; $("#dropZone").classList.add("over");
+}));
+$("#dropZone").addEventListener("dragleave", e=>{
+  e.preventDefault();
+  _dragDepth = Math.max(0, _dragDepth - 1);
+  if (_dragDepth === 0) $("#dropZone").classList.remove("over");
+});
+$("#dropZone").addEventListener("drop", e=>{
+  e.preventDefault(); _dragDepth = 0; $("#dropZone").classList.remove("over");
+  if(e.dataTransfer?.files?.length) addImageFiles(e.dataTransfer.files);
+});
+document.addEventListener("paste", e=>{
+  if(inputType !== "image" || !e.clipboardData) return;
+  const files = [...e.clipboardData.files].filter(f=> f.type.startsWith("image/"));
+  if(files.length){ e.preventDefault(); addImageFiles(files); }
+});
+
+/* Imágenes de demostración dibujadas en canvas */
+function demoImage(bg1, bg2, shape){
+  const c = document.createElement("canvas"); c.width = c.height = 512;
+  const x = c.getContext("2d");
+  const g = x.createLinearGradient(0, 0, 512, 512);
+  g.addColorStop(0, bg1); g.addColorStop(1, bg2);
+  x.fillStyle = g; x.fillRect(0, 0, 512, 512);
+  x.fillStyle = "rgba(255,255,255,.92)";
+  if(shape === "circle"){ x.beginPath(); x.arc(256, 256, 138, 0, Math.PI*2); x.fill(); }
+  else { x.beginPath(); x.roundRect(124, 124, 264, 264, 36); x.fill(); }
+  return c.toDataURL("image/jpeg", 0.85);
+}
+
+/* Colapsar / expandir la sección de categorías (componente collapsible) */
+const catToggle = $("#catToggle"), catBody = $("#catBody");
+function setCatsCollapsed(collapsed){
+  Collapsible.set(catToggle, catBody, collapsed, {
+    expandLabel: "Expandir categorías",
+    collapseLabel: "Colapsar categorías"
+  });
+}
+catToggle.addEventListener("click", ()=> setCatsCollapsed(!Collapsible.isCollapsed(catToggle)));
+
+function renderCategories(){
+  const count = $("#catCount");
+  count.textContent = categories.length;
+  count.hidden = categories.length === 0;
+  const box = $("#categories");
+  box.innerHTML = "";
+  categories.forEach((c,i)=>{
+    const closed = !!c.collapsed;
+    const div = document.createElement("div");
+    div.className = "category";
+    div.innerHTML = `
+      <div class="head">
+        <button class="cat-toggle" type="button" data-tog="${i}" aria-expanded="${!closed}"
+                aria-controls="catDesc${i}" aria-label="${closed ? "Expandir" : "Colapsar"} categoría ${i+1}"
+                title="${closed ? "Expandir" : "Colapsar"} categoría">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <b>#${i+1}</b>
+        <input class="field cat-name" type="text" placeholder="Nombre de categoría (ej. Positivo)" value="${escapeHtml(c.name)}" data-i="${i}" aria-label="Nombre de categoría ${i+1}">
+        <button class="ai-btn" type="button" data-ai="${i}" title="Generar ejemplos con IA" aria-label="Generar ejemplos con IA para la categoría ${i+1}">✦</button>
+        <button class="del" type="button" data-del="${i}" title="Eliminar" aria-label="Eliminar categoría ${i+1}">✕</button>
+      </div>
+      <div class="collapsible ${closed ? "closed" : ""}" id="catDesc${i}"${closed ? " inert" : ""}>
+        <div class="collapsible-in">
+          <textarea class="field cat-proto" placeholder="Descripción / ejemplos representativos de esta categoría..." data-i="${i}" aria-label="Descripción de categoría ${i+1}">${escapeHtml(c.proto)}</textarea>
+          <div class="cat-img">
+            <button class="btn-mini" type="button" data-imgset="${i}">🖼 ${c.image ? "Cambiar imagen" : "Añadir imagen de prototipo"}</button>
+            ${c.image ? `<img class="cat-thumb" src="${c.image}" alt="Prototipo visual de ${escapeHtml(c.name || "la categoría")}">
+              <button class="btn-mini" type="button" data-imgclear="${i}" title="Quitar imagen de prototipo">Quitar imagen</button>` : ""}
+            <span class="hint" style="margin:0;font-size:12px">${c.image ? "Se usará la imagen en lugar del texto." : "Opcional · no se guarda al recargar"}</span>
+          </div>
+        </div>
+      </div>
+    `;
+    box.appendChild(div);
+  });
+  $$("#categories .cat-name").forEach(el=> el.addEventListener("input", e=>{ categories[+e.target.dataset.i].name = e.target.value; }));
+  $$("#categories .cat-proto").forEach(el=> el.addEventListener("input", e=>{ categories[+e.target.dataset.i].proto = e.target.value; }));
+  $$("#categories [data-del]").forEach(el=> el.addEventListener("click", e=>{
+    categories.splice(+e.target.dataset.del,1);
+    renderCategories(); saveSettings(false);
+  }));
+  $$("#categories [data-ai]").forEach(el=> el.addEventListener("click", ()=>{
+    requestExpandExamples(+el.dataset.ai, el);
+  }));
+  $$("#categories [data-imgset]").forEach(el=> el.addEventListener("click", ()=>{
+    pendingCatImage = +el.dataset.imgset;
+    $("#catImageInput").click();
+  }));
+  $$("#categories [data-imgclear]").forEach(el=> el.addEventListener("click", ()=>{
+    categories[+el.dataset.imgclear].image = "";
+    renderCategories();
+  }));
+  $$("#categories [data-tog]").forEach(el=> el.addEventListener("click", ()=>{
+    const i = +el.dataset.tog;
+    const collapsed = !categories[i].collapsed;
+    categories[i].collapsed = collapsed;
+    Collapsible.set(el, document.getElementById("catDesc"+i), collapsed, {
+      expandLabel: `Expandir categoría ${i+1}`,
+      collapseLabel: `Colapsar categoría ${i+1}`
+    });
+    saveSettings(false);
+  }));
+}
+$("#addCatBtn").addEventListener("click", ()=>{ categories.push({name:"",proto:""}); renderCategories(); saveSettings(false); });
+
+/* Imagen de prototipo elegida para una categoría */
+$("#catImageInput").addEventListener("change", async e=>{
+  const file = e.target.files && e.target.files[0];
+  e.target.value = "";
+  const idx = pendingCatImage;
+  pendingCatImage = -1;
+  if(!file || idx < 0 || !categories[idx]) return;
+  try{
+    const url = await fileToEmbeddingImage(file);
+    categories[idx].image = url;
+    renderCategories();
+    showToast("Imagen de prototipo añadida", categories[idx].name || "Categoría " + (idx+1), "ok");
+  }catch(err){
+    showToast("No se pudo procesar la imagen", err.message);
+  }
+});
+$$(".pill[data-preset]").forEach(btn=> btn.addEventListener("click", ()=>{
+  categories = JSON.parse(JSON.stringify(PRESETS[btn.dataset.preset]));
+  renderCategories(); saveSettings(false);
+  showToast(`Plantilla «${btn.textContent.trim()}» cargada`, "Edita las categorías si quieres.", "ok");
+}));
+
+/* ---------- Persistencia ---------- */
+const LS_KEY = "embeddings-classifier-settings-v3";
+const FAIL_THRESHOLD = 3;
+let saveTimer = null;
+let primaryProvider = "openrouter";
+let failOpenRouter = 0;
+let failGoogle = 0;
+let lastChatInfo = null; /* {model, provider} del ultimo chat exitoso */
+
+function providerConfigs(){
+  /* Lee las valores actuales guardados (sin tocar DOM) para fallback. */
+  var d = {};
+  try { d = JSON.parse(localStorage.getItem(LS_KEY) || "{}") || {}; } catch (e) { d = {}; }
+  var uiKey = $("#apiKey") ? $("#apiKey").value.trim() : "";
+  var uiModel = $("#modelId") ? $("#modelId").value.trim() : "";
+  var uiGen = $("#genModelId") ? $("#genModelId").value.trim() : "";
+  var orCfg = {
+    id: "openrouter", name: "OpenRouter",
+    key: primaryProvider === "openrouter" ? uiKey : (d.key || ""),
+    embed: primaryProvider === "openrouter" ? uiModel : (d.model || ""),
+    chat: primaryProvider === "openrouter" ? uiGen : (d.genModel || "")
+  };
+  var gCfg = {
+    id: "google", name: "Google",
+    key: primaryProvider === "google" ? uiKey : (d.googleKey || ""),
+    embed: primaryProvider === "google" ? uiModel : (d.googleModel || ""),
+    chat: primaryProvider === "google" ? uiGen : (d.googleGenModel || "")
+  };
+  return [orCfg, gCfg];
+}
+
+function orderedProviders(kind){
+  /* kind: "embed" | "chat" -> orden [principal, respaldo] solo configurados. */
+  var cfgs = providerConfigs();
+  var primary = cfgs.find(c => c.id === primaryProvider) || cfgs[0];
+  var secondary = cfgs.find(c => c.id !== primaryProvider);
+  var list = [primary, secondary].filter(c => c.key && c[kind]);
+  return list;
+}
+
+function getFailCount(id){ return id === "google" ? failGoogle : failOpenRouter; }
+function bumpFail(id){
+  if (id === "google") failGoogle++; else failOpenRouter++;
+  persistFailCounts();
+}
+function resetFail(id){
+  if (id === "google") { if (failGoogle) { failGoogle = 0; persistFailCounts(); } }
+  else { if (failOpenRouter) { failOpenRouter = 0; persistFailCounts(); } }
+}
+function persistFailCounts(){
+  try {
+    var raw = localStorage.getItem(LS_KEY);
+    var d = raw ? JSON.parse(raw) : {};
+    d.failOpenRouter = failOpenRouter;
+    d.failGoogle = failGoogle;
+    localStorage.setItem(LS_KEY, JSON.stringify(d));
+  } catch (e) { }
+}
+
+function updateProviderUI(){
+  var isGoogle = primaryProvider === "google";
+  /* Etiquetas de la barra lateral (solo lectura, el proveedor se define en Ajustes). */
+  var apiLabel = document.querySelector('label[for="apiKey"]');
+  if (apiLabel) {
+    var href = isGoogle ? "https://aistudio.google.com/apikey" : "https://openrouter.ai/keys";
+    apiLabel.innerHTML = "Clave de " + (isGoogle ? "Google" : "OpenRouter") +
+      ' <span class="val"><a href="' + href + '" target="_blank" rel="noopener">Crear clave ↗</a></span>';
+  }
+  var mLabel = document.querySelector('label[for="modelId"]');
+  if (mLabel) {
+    var mh = isGoogle
+      ? "https://ai.google.dev/gemini-api/docs/models"
+      : "https://openrouter.ai/models?filter=embeddings";
+    mLabel.innerHTML = 'ID del modelo <span class="val"><a href="' + mh + '" target="_blank" rel="noopener">Ver modelos ↗</a></span>';
+  }
+  /* Desplegables: listas fijas de Google vs catalogo OpenRouter. */
+  var mInput = document.getElementById("modelId");
+  var gInput = document.getElementById("genModelId");
+  if (mInput) mInput.setAttribute("data-model-type", isGoogle ? "gembeddings" : "embeddings");
+  if (gInput) gInput.setAttribute("data-model-type", isGoogle ? "gchat" : "chat");
+  /* Pie: endpoint del principal. */
+  var footCode = document.querySelector(".foot code");
+  var footLink = document.querySelector(".foot a");
+  if (footCode && footLink) {
+    if (isGoogle) {
+      footCode.textContent = "POST generativelanguage.googleapis.com/v1beta/models";
+      footLink.href = "https://ai.google.dev/gemini-api/docs/models";
+      footLink.textContent = "Documentación ↗";
+    } else {
+      footCode.textContent = "POST openrouter.ai/api/v1/embeddings";
+      footLink.href = "https://openrouter.ai/docs/api-reference/embeddings";
+      footLink.textContent = "Documentación ↗";
+    }
+  }
+}
+
+/* Guardado silencioso y automático: sin botones ni avisos */
+function saveSettings(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=>{
+    var raw = null, prev = {};
+    try { raw = localStorage.getItem(LS_KEY); prev = raw ? JSON.parse(raw) : {}; } catch (e) { prev = {}; }
+    var data = {
+      model: prev.model, genModel: prev.genModel,
+      googleModel: prev.googleModel, googleGenModel: prev.googleGenModel,
+      googleKey: prev.googleKey, key: prev.key,
+      primaryProvider: primaryProvider,
+      failOpenRouter: failOpenRouter, failGoogle: failGoogle,
+      dimensions: $("#dimensions").value.trim(),
+      /* las imágenes de prototipo se quedan solo en memoria (no caben en localStorage) */
+      categories: categories.map(c=>({ name: c.name, proto: c.proto, collapsed: !!c.collapsed })),
+      mode,
+      inputType,
+      updatedAt: new Date().toISOString()
+    };
+    if (prev.githubSync) data.githubSync = prev.githubSync;
+    if (prev.autoBackup !== undefined) data.autoBackup = prev.autoBackup;
+    if (primaryProvider === "google") {
+      data.googleKey = $("#apiKey").value.trim();
+      data.model = prev.model;
+      data.genModel = prev.genModel;
+      data.googleModel = $("#modelId").value.trim();
+      data.googleGenModel = $("#genModelId").value.trim();
+    } else {
+      data.googleKey = prev.googleKey;
+      data.key = $("#apiKey").value.trim();
+      data.model = $("#modelId").value.trim();
+      data.genModel = $("#genModelId").value.trim();
+      data.googleModel = prev.googleModel;
+      data.googleGenModel = prev.googleGenModel;
+    }
+    try{
+      /* Preserva el tema gestionado por el componente reutilizable */
+      if(prev.theme) data.theme = prev.theme;
+      localStorage.setItem(LS_KEY, JSON.stringify(data));
+
+      /* Disparar respaldo automático si está activado */
+      if (window.PerfilSync && window.PerfilSync.scheduleAutoBackup) {
+        window.PerfilSync.scheduleAutoBackup();
+      }
+    }catch(e){}
+  }, 250);
+}
+function loadSettings(){
+  categories = JSON.parse(JSON.stringify(DEFAULT_CATEGORIES));
+  try{
+    let raw = localStorage.getItem(LS_KEY);
+    if(!raw) raw = localStorage.getItem("embeddings-classifier-settings-v2"); /* migrar ajustes anteriores */
+    if(raw){
+      const d = JSON.parse(raw);
+      primaryProvider = d.primaryProvider === "google" ? "google" : "openrouter";
+      failOpenRouter = Number.isFinite(d.failOpenRouter) ? d.failOpenRouter : 0;
+      failGoogle = Number.isFinite(d.failGoogle) ? d.failGoogle : 0;
+      if(primaryProvider === "google"){
+        if(d.googleKey) $("#apiKey").value = d.googleKey;
+        if(d.googleModel) $("#modelId").value = d.googleModel;
+        if(d.googleGenModel) $("#genModelId").value = d.googleGenModel;
+      } else {
+        if(d.key) $("#apiKey").value = d.key;
+        if(d.model) $("#modelId").value = d.model;
+        if(d.genModel) $("#genModelId").value = d.genModel;
+      }
+      if(d.dimensions) $("#dimensions").value = d.dimensions;
+      if(Array.isArray(d.categories) && d.categories.length) categories = d.categories;
+      if(d.mode) mode = d.mode === "batch" ? "batch" : "single";
+      inputType = d.inputType === "image" ? "image" : "text";
+    }
+  }catch(e){}
+  updateProviderUI();
+  setSeg("modeSeg", mode);
+  setInputType(inputType);
+  renderCategories();
+  scheduleAutoTest(400);
+}
+
+/* ---------- Notificaciones: showToast() vive en toast.js (global). ---------- */
+
+function cosine(a,b){
+  if(a.length!==b.length) throw new Error(`Dimensiones incompatibles: ${a.length} vs ${b.length}`);
+  let dot=0, na=0, nb=0;
+  for(let i=0;i<a.length;i++){ dot+=a[i]*b[i]; na+=a[i]*a[i]; nb+=b[i]*b[i]; }
+  const denom = Math.sqrt(na)*Math.sqrt(nb);
+  return denom===0 ? 0 : dot/denom;
+}
+
+async function openRouterEmbeddings(inputs, key, model){
+  if(!key) throw new Error("Falta la clave de API de OpenRouter.");
+  if(!model) throw new Error("Falta el ID del modelo de embedding.");
+  if(!inputs.length) throw new Error("No hay textos para enviar.");
+  const body = { model, input: inputs };
+  const dims = $("#dimensions").value.trim();
+  if(dims){ const n = parseInt(dims,10); if(!Number.isNaN(n) && n>0) body.dimensions = n; }
+  const t0 = performance.now();
+  const dl = deadlineSignal(null, GEN_LIMITS.maxMs);
+  let res;
+  try {
+    res = await fetch("https://openrouter.ai/api/v1/embeddings", {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + key,
+        "Content-Type": "application/json",
+        "HTTP-Referer": location.href,
+        "X-Title": "Clasificador Embeddings"
+      },
+      body: JSON.stringify(body),
+      signal: dl.signal
+    });
+  } finally { dl.clear(); }
+  const ms = Math.round(performance.now()-t0);
+  let json;
+  try{ json = await res.json(); }catch(e){ json = null; }
+  if(!res.ok){
+    const msg = json?.error?.message || json?.message || `HTTP ${res.status} ${res.statusText}`;
+    const code = json?.error?.code ? ` (code: ${json.error.code})` : "";
+    if(res.status===401) throw new Error("Clave no válida (401). Revisa tu clave de OpenRouter."+code);
+    if(res.status===404) throw new Error("Modelo no encontrado (404): «"+model+"». Revisa el ID."+code+"\n"+msg);
+    if(res.status===429) throw new Error("Límite de velocidad / cuota (429). Espera unos segundos y reintenta."+code+"\n"+msg);
+    throw new Error("Error de OpenRouter: "+msg+code);
+  }
+  if(!json || !Array.isArray(json.data)) throw new Error("Respuesta inesperada de OpenRouter: "+JSON.stringify(json).slice(0,500));
+  const sorted = [...json.data].sort((a,b)=>(a.index??0)-(b.index??0));
+  return { embeddings: sorted.map(d=>d.embedding), model: (json.model||model)+" (OpenRouter)", usage: json.usage||null, ms };
+}
+
+function toGoogleContent(input){
+  /* Convierte input OpenRouter (string o {content:[...]}) a Content de Google. */
+  if (typeof input === "string") return { parts: [{ text: input }] };
+  if (input && Array.isArray(input.content)) {
+    var parts = [];
+    for (const p of input.content) {
+      if (p.type === "text" && typeof p.text === "string") parts.push({ text: p.text });
+      else if (p.type === "image_url" && p.image_url && typeof p.image_url.url === "string") {
+        var m = p.image_url.url.match(/^data:([^;,]+);base64,(.*)$/s);
+        if (!m) throw new Error("Imagen no soportada para Google (se esperaba data URL).");
+        parts.push({ inline_data: { mime_type: m[1] || "image/jpeg", data: m[2] } });
+      }
+    }
+    if (parts.length) return { parts };
+  }
+  throw new Error("Entrada no soportada para Google.");
+}
+
+async function googleEmbeddings(inputs, key, model){
+  if(!key) throw new Error("Falta la clave de API de Google.");
+  if(!model) throw new Error("Falta el ID del modelo de embedding.");
+  if(!inputs.length) throw new Error("No hay textos para enviar.");
+  var short = model.replace(/^models\//, "");
+  var dimsRaw = $("#dimensions").value.trim();
+  var dims = dimsRaw ? parseInt(dimsRaw, 10) : NaN;
+  var requests = inputs.map(function (inp) {
+    var req = { model: "models/" + short, content: toGoogleContent(inp) };
+    if (Number.isFinite(dims) && dims > 0) req.output_dimensionality = dims;
+    return req;
+  });
+  var t0 = performance.now();
+  var dl = deadlineSignal(null, GEN_LIMITS.maxMs);
+  let res;
+  try {
+    res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(short) + ":batchEmbedContents", {
+      method: "POST",
+      headers: { "x-goog-api-key": key, "Content-Type": "application/json" },
+      body: JSON.stringify({ requests: requests }),
+      signal: dl.signal
+    });
+  } finally { dl.clear(); }
+  var ms = Math.round(performance.now() - t0);
+  var json;
+  try { json = await res.json(); } catch (e) { json = null; }
+  if (!res.ok) {
+    var msg = (json && json.error && json.error.message) || (json && json.message) || ("HTTP " + res.status + " " + res.statusText);
+    if (res.status === 400 || res.status === 401 || res.status === 403) throw new Error("Clave no válida (" + res.status + "). Revisa tu clave de Google.\n" + msg);
+    if (res.status === 404) throw new Error("Modelo no encontrado (404): «" + model + "». Revisa el ID.\n" + msg);
+    if (res.status === 429) throw new Error("Límite de velocidad / cuota (429). Espera unos segundos y reintenta.\n" + msg);
+    throw new Error("Error de Google: " + msg);
+  }
+  if (!json || !Array.isArray(json.embeddings)) throw new Error("Respuesta inesperada de Google: " + JSON.stringify(json).slice(0,500));
+  return { embeddings: json.embeddings.map(function (e) { return e.values; }), model: model + " (Google)", usage: null, ms: ms };
+}
+
+async function getEmbeddings(inputs){
+  var order = orderedProviders("embed");
+  if (!order.length) throw new Error("Falta la clave de API (sin proveedor configurado).");
+  var lastErr = null;
+  for (var i = 0; i < order.length; i++) {
+    var cfg = order[i];
+    try {
+      var res = cfg.id === "google"
+        ? await googleEmbeddings(inputs, cfg.key, cfg.embed)
+        : await openRouterEmbeddings(inputs, cfg.key, cfg.embed);
+      resetFail(cfg.id);
+      return res;
+    } catch (e) {
+      if (e && e.name === "AbortError") throw e;
+      bumpFail(cfg.id);
+      lastErr = e;
+      /* Solo tras FAIL_THRESHOLD fallos seguidos se intenta el respaldo. */
+      if (getFailCount(cfg.id) >= FAIL_THRESHOLD && i + 1 < order.length) {
+        showToast("Respaldo activado", cfg.name + " falló " + FAIL_THRESHOLD + " veces, probando con " + order[i+1].name + ".", "ok");
+        continue;
+      }
+      if (i + 1 < order.length && getFailCount(cfg.id) < FAIL_THRESHOLD) throw e;
+      if (i + 1 < order.length) continue;
+      throw e;
+    }
+  }
+  throw lastErr || new Error("No se pudo obtener embeddings.");
+}
+
+/* ---------- Generación de categorías con un modelo de chat ---------- */
+/* Límites profesionales de la generación (defensa en profundidad) */
+const GEN_LIMITS = {
+  maxTokens: 4000,        /* tope de tokens de salida enviado al proveedor (incluye razonamiento) */
+  maxChars: 4000,         /* tope de caracteres de contenido aceptados */
+  maxChunks: 2000,        /* tope de fragmentos del stream (los tokens cortos generan muchos) */
+  maxMs: 60000,           /* tope de tiempo total (60 s) */
+  idleMs: 15000           /* tope sin recibir tokens (15 s) */
+};
+
+/* Combina la señal del usuario (cancelar) con un plazo total.
+   El plazo expira con TimeoutError (cuenta como fallo y admite
+   fallback); el aborto del usuario conserva AbortError (no cuenta). */
+function deadlineSignal(userSignal, ms){
+  if (!ms) return { signal: userSignal || undefined, clear: function () {} };
+  if (typeof AbortSignal.timeout === "function") {
+    var t = AbortSignal.timeout(ms);
+    if (!userSignal) return { signal: t, clear: function () {} };
+    if (typeof AbortSignal.any === "function") {
+      return { signal: AbortSignal.any([userSignal, t]), clear: function () {} };
+    }
+  }
+  var ctl = new AbortController();
+  var to = setTimeout(function () {
+    ctl.abort(new DOMException("Tiempo agotado (" + Math.round(ms / 1000) + "s)", "TimeoutError"));
+  }, ms);
+  var onAbort = function () { ctl.abort(userSignal && userSignal.reason ? userSignal.reason : new DOMException("Aborted", "AbortError")); };
+  if (userSignal) {
+    if (userSignal.aborted) ctl.abort(userSignal.reason);
+    else userSignal.addEventListener("abort", onAbort, { once: true });
+  }
+  return {
+    signal: ctl.signal,
+    clear: function () {
+      clearTimeout(to);
+      if (userSignal && userSignal.removeEventListener) userSignal.removeEventListener("abort", onAbort);
+    }
+  };
+}
+/* Modelos conocidos con razonamiento (heurística por nombre) */
+const REASONING_HINTS = ["reasoning", "thinking", "deepseek-r", "o1", "o3", "o4", "gemini-2.5", "claude-3.7", "claude-4", "qwen3", "grok-4", "kimi-k2"];
+function modelHasReasoning(model){
+  const m = (model || "").toLowerCase();
+  return REASONING_HINTS.some(h => m.includes(h));
+}
+async function openRouterChat(model, messages, onEvent, signal, opts, key){
+  if(!key) throw new Error("Falta la clave de API de OpenRouter.");
+  if(!model) throw new Error("Falta el ID del modelo generador. Configúralo en el panel lateral.");
+  const emit = typeof onEvent === "function" ? onEvent : ()=>{};
+  const t0 = performance.now();
+  let lastTokenAt = t0;
+  let stoppedBy = null;   /* "max_tokens" | "max_chars" | "max_chunks" | "timeout" | "idle" */
+  emit({ type: "status", text: "Conectando con OpenRouter…" });
+  var baseTokens = (opts && Number.isFinite(opts.maxTokens) && opts.maxTokens > 0) ? opts.maxTokens : GEN_LIMITS.maxTokens;
+  const body = { model, messages, temperature: 0.5, max_tokens: baseTokens, stream: true, stream_options: { include_usage: true } };
+  /* Control de razonamiento: desactivado = esfuerzo medio-bajo */
+  if(opts && opts.reasoning === false){
+    body.reasoning = { effort: "low", exclude: true };
+    body.max_tokens = baseTokens + 2000; /* margen extra: el razonamiento también consume tokens */
+  }else if(opts && opts.reasoning === true){
+    body.reasoning = { effort: "medium" };
+    body.max_tokens = baseTokens + 2000;
+  }
+  const dl = deadlineSignal(signal, GEN_LIMITS.maxMs);
+  let res;
+  try {
+    res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + key,
+        "Content-Type": "application/json",
+        "HTTP-Referer": location.href,
+        "X-Title": "Clasificador Embeddings"
+      },
+      body: JSON.stringify(body),
+      signal: dl.signal
+    });
+  } finally { dl.clear(); }
+  emit({ type: "status", text: `Respuesta HTTP ${res.status} · esperando tokens…` });
+  if(!res.ok || !res.body){
+    let json = null;
+    try{ json = await res.clone().json(); }catch(e){}
+    const msg = json?.error?.message || json?.message || `HTTP ${res.status} ${res.statusText}`;
+    const code = json?.error?.code ? ` (code: ${json.error.code})` : "";
+    if(res.status===401) throw new Error("Clave no válida (401). Revisa tu clave de OpenRouter."+code);
+    if(res.status===404) throw new Error("Modelo no encontrado (404): «"+model+"». Revisa el ID."+code+"\n"+msg);
+    if(res.status===429) throw new Error("Límite de velocidad / cuota (429). Espera unos segundos y reintenta."+code+"\n"+msg);
+    throw new Error("Error de OpenRouter: "+msg+code);
+  }
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let content = "";
+  let reasoning = "";
+  let usage = null;
+  let finishReason = null;
+  let chunks = 0;
+  let sawDone = false;
+  const flush = ()=>{
+    const lines = buffer.split(/\r?\n/);
+    buffer = lines.pop() || "";
+    for(const line of lines){
+      const trimmed = line.trim();
+      if(!trimmed || !trimmed.startsWith("data:")) continue;
+      const data = trimmed.slice(5).trim();
+      if(data === "[DONE]"){ sawDone = true; continue; }
+      let json;
+      try{ json = JSON.parse(data); }catch(e){ continue; }
+      const delta = json?.choices?.[0]?.delta || {};
+      const piece = typeof delta.content === "string" ? delta.content : "";
+      const think = typeof delta.reasoning === "string" ? delta.reasoning
+        : (typeof delta.reasoning_content === "string" ? delta.reasoning_content : "");
+      if(think){ reasoning += think; emit({ type: "reasoning", text: think }); }
+      if(piece){
+        content += piece; chunks++; lastTokenAt = performance.now();
+        emit({ type: "token", text: piece, chunks });
+        if(content.length >= GEN_LIMITS.maxChars && !stoppedBy) stoppedBy = "max_chars";
+        if(chunks >= GEN_LIMITS.maxChunks && !stoppedBy) stoppedBy = "max_chunks";
+      }
+      if(json?.choices?.[0]?.finish_reason) finishReason = json.choices[0].finish_reason;
+      if(json?.usage) usage = json.usage;
+    }
+  };
+  try{
+    while(true){
+      const now = performance.now();
+      if(now - t0 > GEN_LIMITS.maxMs){ stoppedBy = stoppedBy || "timeout"; break; }
+      if(now - lastTokenAt > GEN_LIMITS.idleMs){ stoppedBy = stoppedBy || "idle"; break; }
+      const { done, value } = await reader.read();
+      if(done) break;
+      buffer += decoder.decode(value, { stream: true });
+      flush();
+      emit({ type: "tick", ms: Math.round(performance.now() - t0), chunks });
+      if(sawDone || finishReason || stoppedBy) break;
+    }
+  }finally{
+    try{ await reader.cancel(); }catch(e){}
+    try{ reader.releaseLock(); }catch(e){}
+  }
+  buffer += decoder.decode();
+  flush();
+  if(finishReason === "length" && !stoppedBy) stoppedBy = "max_tokens";
+  emit({ type: "done", ms: Math.round(performance.now() - t0), chunks, usage, finishReason, stoppedBy });
+  if(!content){
+    if(reasoning) throw new Error("El modelo agotó los tokens en razonamiento sin producir contenido. Prueba con la casilla de razonamiento desactivada o usa un modelo sin razonamiento extenso.");
+    throw new Error("El modelo no devolvió contenido.");
+  }
+  return content;
+}
+
+async function googleChat(model, messages, onEvent, signal, opts, key){
+  if(!key) throw new Error("Falta la clave de API de Google.");
+  if(!model) throw new Error("Falta el ID del modelo generador. Configúralo en Ajustes.");
+  const emit = typeof onEvent === "function" ? onEvent : ()=>{};
+  const t0 = performance.now();
+  emit({ type: "status", text: "Conectando con Google…" });
+  if (signal && signal.aborted) throw new DOMException("Aborted", "AbortError");
+  /* OpenAI -> Google: system como systemInstruction. */
+  let systemText = "";
+  let contents = [];
+  for (const m of messages) {
+    const text = typeof m.content === "string" ? m.content : JSON.stringify(m.content);
+    if (m.role === "system") systemText += (systemText ? "\n" : "") + text;
+    else if (m.role === "assistant") contents.push({ role: "model", parts: [{ text: text }] });
+    else contents.push({ role: "user", parts: [{ text: text }] });
+  }
+  if (!contents.length) contents.push({ role: "user", parts: [{ text: "" }] });
+  const short = model.replace(/^models\//, "");
+  var baseTokensG = (opts && Number.isFinite(opts.maxTokens) && opts.maxTokens > 0) ? opts.maxTokens : GEN_LIMITS.maxTokens;
+  const body = {
+    contents: contents,
+    generationConfig: {
+      temperature: 0.5,
+      maxOutputTokens: baseTokensG + (opts ? 2000 : 0)
+    }
+  };
+  if (systemText) body.systemInstruction = { parts: [{ text: systemText }] };
+  let res;
+  var dlG = deadlineSignal(signal, GEN_LIMITS.maxMs);
+  try {
+    res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(short) + ":generateContent", {
+      method: "POST",
+      headers: { "x-goog-api-key": key, "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal: dlG.signal
+    });
+  } catch (e) {
+    if (e && e.name === "AbortError") throw e;
+    throw new Error("Error de red con Google: " + (e && e.message ? e.message : e));
+  } finally { dlG.clear(); }
+  emit({ type: "status", text: "Respuesta HTTP " + res.status + " · procesando…" });
+  let json;
+  try { json = await res.json(); } catch (e) { json = null; }
+  if (!res.ok) {
+    var msg = (json && json.error && json.error.message) || (json && json.message) || ("HTTP " + res.status + " " + res.statusText);
+    if (res.status === 400 || res.status === 401 || res.status === 403) throw new Error("Clave no válida (" + res.status + "). Revisa tu clave de Google.\n" + msg);
+    if (res.status === 404) throw new Error("Modelo no encontrado (404): «" + model + "». Revisa el ID.\n" + msg);
+    if (res.status === 429) throw new Error("Límite de velocidad / cuota (429). Espera unos segundos y reintenta.\n" + msg);
+    throw new Error("Error de Google: " + msg);
+  }
+  let content = "";
+  try {
+    const cand = json && json.candidates && json.candidates[0];
+    content = cand && cand.content && Array.isArray(cand.content.parts)
+      ? cand.content.parts.map(p => p.text || "").join("")
+      : "";
+  } catch (e) { content = ""; }
+  if (!content) throw new Error("El modelo no devolvió contenido.");
+  const usage = json && json.usageMetadata
+    ? { total_tokens: json.usageMetadata.totalTokenCount ?? null, completion_tokens: json.usageMetadata.candidatesTokenCount ?? null }
+    : null;
+  const chunks = Math.max(1, Math.ceil(content.length / 200));
+  emit({ type: "token", text: content, chunks: chunks });
+  emit({ type: "done", ms: Math.round(performance.now() - t0), chunks: chunks, usage: usage, finishReason: null, stoppedBy: null });
+  return content;
+}
+
+async function chatCompletion(model, messages, onEvent, signal, opts){
+  var order = orderedProviders("chat");
+  if (!order.length) throw new Error("Falta la clave de API (sin proveedor configurado).");
+  /* El `model` del llamador corresponde al principal; para el respaldo
+     se usa su propio modelo de chat. */
+  var tokens = 0;
+  var wrapped = typeof onEvent === "function"
+    ? function (ev) { if (ev && ev.type === "token") tokens++; onEvent(ev); }
+    : undefined;
+  var lastErr = null;
+  for (var i = 0; i < order.length; i++) {
+    var cfg = order[i];
+    var useModel = i === 0 ? model : cfg.chat;
+    try {
+      var content = cfg.id === "google"
+        ? await googleChat(useModel, messages, wrapped, signal, opts, cfg.key)
+        : await openRouterChat(useModel, messages, wrapped, signal, opts, cfg.key);
+      resetFail(cfg.id);
+      lastChatInfo = { model: useModel, provider: cfg.id };
+      return content;
+    } catch (e) {
+      if (e && e.name === "AbortError") throw e;
+      /* Si ya salio contenido, no se puede reintentar con otro proveedor. */
+      if (tokens > 0) throw e;
+      bumpFail(cfg.id);
+      lastErr = e;
+      if (getFailCount(cfg.id) >= FAIL_THRESHOLD && i + 1 < order.length) {
+        if (typeof onEvent === "function") onEvent({ type: "status", text: "Respaldo con " + order[i+1].name + "…" });
+        showToast("Respaldo activado", cfg.name + " falló " + FAIL_THRESHOLD + " veces, probando con " + order[i+1].name + ".", "ok");
+        continue;
+      }
+      if (i + 1 < order.length && getFailCount(cfg.id) < FAIL_THRESHOLD) throw e;
+      if (i + 1 < order.length) continue;
+      throw e;
+    }
+  }
+  throw lastErr || new Error("No se pudo completar la generación.");
+}
+
+/* Extrae el primer JSON válido del texto (acepta bloques ```json, arrays u objetos) */
+function parseLooseJSON(text){
+  let s = String(text).trim().replace(/^```(?:json)?/i, "").replace(/```\s*$/i, "").trim();
+  const candidates = [s];
+  const a = s.indexOf("{"), b = s.lastIndexOf("}");
+  if(a >= 0 && b > a) candidates.push(s.slice(a, b+1));
+  const c = s.indexOf("["), d = s.lastIndexOf("]");
+  if(c >= 0 && d > c) candidates.push(s.slice(c, d+1));
+  for(const cand of candidates){
+    try{ return JSON.parse(cand); }catch(e){}
+  }
+  /* Rescate: si el stream se cortó a mitad del JSON, cierra lo que falta */
+  const open = s.indexOf("{");
+  if(open >= 0){
+    let fixed = s.slice(open);
+    let inStr = false, esc = false, stack = [];
+    for(const ch of fixed){
+      if(esc){ esc = false; continue; }
+      if(ch === "\\" && inStr){ esc = true; continue; }
+      if(ch === '"'){ inStr = !inStr; continue; }
+      if(inStr) continue;
+      if(ch === "{" || ch === "[") stack.push(ch);
+      else if(ch === "}" || ch === "]") stack.pop();
+    }
+    if(inStr) fixed += '"';
+    while(stack.length) fixed += stack.pop() === "{" ? "}" : "]";
+    try{ return JSON.parse(fixed); }catch(e){}
+  }
+  throw new Error("La respuesta del modelo no contiene JSON válido.");
+}
+
+function normalizeCategories(parsed){
+  const arr = Array.isArray(parsed) ? parsed
+    : (parsed.categorias || parsed.categories || parsed.items || parsed.data || parsed.result || []);
+  if(!Array.isArray(arr)) return [];
+  const pick = (o, keys) => {
+    for(const k of keys){
+      if(typeof o[k] === "string" && o[k].trim()) return o[k].trim();
+      if(Array.isArray(o[k])) return o[k].join(", ");
+    }
+    return "";
+  };
+  return arr.map(o=>{
+    if(typeof o === "string") return { name: o.trim(), proto: "" };
+    return {
+      name: pick(o, ["nombre","name","categoria","category","titulo","title","label"]),
+      proto: pick(o, ["ejemplos","ejemplo","descripcion","description","palabras_clave","keywords","detalle","detail"])
+    };
+  }).filter(c=>c.name);
+}
+
+/* Detecta un número en el texto del tema ("5 categorías", "cinco", "unas 7", etc.) */
+const NUM_WORDS = { uno:1, dos:2, tres:3, cuatro:4, cinco:5, seis:6, siete:7, ocho:8, nueve:9, diez:10, once:11, doce:12, quince:15, veinte:20, treinta:30 };
+function extractCountFromTopic(topic){
+  const t = " " + topic.toLowerCase().replace(/[.,;:!?()"]/g, " ") + " ";
+  let m = t.match(/\b(\d{1,2})\b/);
+  if(m){ const n = parseInt(m[1], 10); if(n >= 1 && n <= 30) return n; }
+  for(const w in NUM_WORDS){
+    if(new RegExp("\\b" + w + "\\b").test(t)) return NUM_WORDS[w];
+  }
+  return null;
+}
+
+async function generateCategories(){
+  const btn = $("#genBtn");
+  const topic = $("#genTopic").value.trim();
+  const rawCount = $("#genCount").value.trim();
+  let count = parseInt(rawCount, 10);
+  if(Number.isNaN(count) || count < 1) count = null;
+  if(count !== null && count > 30) count = 30;
+  try{
+    if(!topic) throw new Error("Escribe sobre qué deben ser las categorías.");
+    const model = $("#genModelId").value.trim();
+    if(!orderedProviders("chat").length) throw new Error("Define el ID del modelo generador en Ajustes.");
+    btn.disabled = true; btn.textContent = "Generando…";
+    const existing = categories.map(c=>c.name).filter(Boolean);
+    /* Si el campo de número está vacío, la IA infiere la cantidad del texto del tema */
+    const countInstruction = count !== null
+      ? `Crea exactamente ${count} categorías para clasificar textos sobre ese tema.\n`
+      : `Si el tema indica una cantidad (número o palabra como "cinco"), crea exactamente esa cantidad de categorías. Si no indica ninguna, crea 3.\n`;
+    const content = await chatCompletion(model, [
+      { role: "system", content: "Diseñas esquemas de clasificación de textos. Respondes SIEMPRE con JSON válido y nada más: sin explicaciones ni bloques de código." },
+      { role: "user", content:
+        `Tema: ${topic}\n` +
+        countInstruction +
+        `Cada categoría: "nombre" corto (1-3 palabras) y "ejemplos" con palabras clave y frases representativas separadas por comas, en español.\n` +
+        `No repitas estas categorías ya existentes: ${existing.length ? existing.join(", ") : "(ninguna)"}.\n` +
+        `Formato exacto: {"categorias":[{"nombre":"...","ejemplos":"..."}]}`
+      }
+    ]);
+    const parsed = parseLooseJSON(content);
+    const nuevos = normalizeCategories(parsed).map(c=>({ name:c.name, proto:c.proto, collapsed:false }));
+    if(!nuevos.length) throw new Error("El modelo no devolvió categorías utilizables. Intenta de nuevo.");
+    categories = categories.concat(nuevos);   /* se suman, no reemplazan */
+    renderCategories();
+    saveSettings();
+    /* Si el campo de número estaba vacío, refleja en él la cantidad detectada o la generada */
+    if(count === null){
+      const detected = extractCountFromTopic(topic);
+      if(detected !== null) $("#genCount").value = detected;
+    }
+    showToast(
+      `Se añadieron ${nuevos.length} categoría${nuevos.length === 1 ? "" : "s"}`,
+      nuevos.map(c=>c.name).join(" · "),
+      "ok"
+    );
+  }catch(e){
+    showToast("No se pudieron generar las categorías", e.message);
+  }finally{
+    btn.disabled = false; btn.textContent = "✦ Generar";
+  }
+}
+
+$("#genBtn").addEventListener("click", generateCategories);
+$("#genTopic").addEventListener("keydown", e=>{ if(e.key === "Enter") generateCategories(); });
+
+/* ---------- Expandir ejemplos de una categoría con IA ---------- */
+let pendingExpand = null;   /* { index, btn } mientras se confirma o se revisa el diff */
+let pendingDiff = null;     /* { index, oldProto, newProto } */
+let genAbort = null;        /* AbortController de la generación en curso */
+let genTimer = null;        /* temporizador del cronómetro de progreso */
+
+/* Modal: open/close/backdrop/Escape centralizados en componentes/modal/modal.js (global Modal). */
+
+function resetGenProgress(){
+  $("#reasonToggle").hidden = true;
+  $("#genProgress").hidden = false;
+  $("#genStatus").textContent = "Conectando con OpenRouter…";
+  $("#genLog").innerHTML = "";
+  $("#genBar").style.width = "0%";
+  $("#genElapsed").textContent = "0.0 s";
+  $("#genTokens").textContent = "";
+  $("#confirmGenOk").disabled = true;
+  $("#confirmGenOk").textContent = "Generando…";
+  $("#confirmGenCancel").textContent = "Cancelar generación";
+}
+function stopGenTimer(){ if(genTimer){ clearInterval(genTimer); genTimer = null; } }
+function startGenTimer(t0){
+  stopGenTimer();
+  genTimer = setInterval(()=>{
+    $("#genElapsed").textContent = ((performance.now() - t0) / 1000).toFixed(1) + " s";
+  }, 100);
+}
+function logLine(text, cls){
+  const log = $("#genLog");
+  const div = document.createElement("div");
+  div.className = "line" + (cls ? " " + cls : "");
+  const t = document.createElement("span");
+  t.className = "t";
+  t.textContent = new Date().toLocaleTimeString("es-MX", { hour12: false });
+  const body = document.createElement("span");
+  body.textContent = text;
+  div.appendChild(t); div.appendChild(body);
+  log.appendChild(div);
+  while(log.childElementCount > 200) log.removeChild(log.firstChild);
+  log.scrollTop = log.scrollHeight;
+}
+function handleGenEvent(ev, t0){
+  if(ev.type === "status"){
+    $("#genStatus").textContent = ev.text;
+    logLine(ev.text);
+  }else if(ev.type === "reasoning"){
+    $("#genStatus").textContent = "Razonando…";
+    logLine(ev.text, "think");
+  }else if(ev.type === "token"){
+    $("#genStatus").textContent = `Generando… (${ev.chunks} fragmentos)`;
+    $("#genBar").style.width = Math.min(95, 5 + ev.chunks) + "%";
+    logLine(ev.text);
+  }else if(ev.type === "tick"){
+    $("#genElapsed").textContent = (ev.ms / 1000).toFixed(1) + " s";
+  }else if(ev.type === "done"){
+    $("#genBar").style.width = "100%";
+    $("#genElapsed").textContent = (ev.ms / 1000).toFixed(1) + " s";
+    const tok = ev.usage ? ` · Tokens: ${ev.usage.total_tokens ?? ev.usage.completion_tokens ?? "?"}` : "";
+    const stopNote = ev.stoppedBy ? ` · detenido por límite (${ev.stoppedBy})` : "";
+    $("#genTokens").textContent = `${ev.chunks} fragmentos${tok}${ev.finishReason ? " · " + ev.finishReason : ""}${stopNote}`;
+    $("#genStatus").textContent = ev.stoppedBy
+      ? `Generación detenida por límite (${ev.stoppedBy}). Revisa el diff…`
+      : "Generación completada. Revisa el diff…";
+    logLine(`Completado en ${(ev.ms / 1000).toFixed(1)} s · ${ev.chunks} fragmentos${tok}${stopNote}`);
+  }
+}
+
+function updateReasonHint(){
+  const on = $("#reasonCheck").checked;
+  $("#reasonHint").textContent = on
+    ? "Activado: el modelo puede pensar antes de responder."
+    : "Desactivado: esfuerzo medio-bajo, sin razonamiento visible.";
+}
+$("#reasonCheck").addEventListener("change", updateReasonHint);
+
+function requestExpandExamples(index, btn){
+  const cat = categories[index];
+  if(!cat) return;
+  const name = (cat.name || "").trim();
+  if(!name){ showToast("Falta el nombre de la categoría", "Escribe un nombre antes de generar ejemplos."); return; }
+  const genModel = $("#genModelId").value.trim();
+  if(!orderedProviders("chat").length){ showToast("Falta el modelo generador", "Defínelo en Ajustes (o en el panel lateral)."); return; }
+  pendingExpand = { index, btn };
+  $("#genProgress").hidden = true;
+  $("#confirmGenOk").disabled = false;
+  $("#confirmGenOk").textContent = "Generar";
+  $("#confirmGenCancel").textContent = "Cancelar";
+  $("#confirmGenText").textContent = `Se generará una lista extensa de ejemplos para «${name}» con el modelo generador configurado. Podrás revisar los cambios antes de aplicarlos.`;
+  /* La casilla solo aparece si el modelo parece tener razonamiento */
+  const hasReasoning = modelHasReasoning(genModel);
+  $("#reasonToggle").hidden = !hasReasoning;
+  if(hasReasoning){
+    $("#reasonCheck").checked = true;
+    $("#reasonBadge").textContent = "detectado";
+    updateReasonHint();
+  }
+  Modal.open("#confirmGenBackdrop");
+  $("#confirmGenOk").focus();
+}
+function cancelExpand(){
+  if(genAbort){ genAbort.abort(); genAbort = null; }
+  stopGenTimer();
+  pendingExpand = null;
+  Modal.close("#confirmGenBackdrop");
+}
+$("#confirmGenCancel").addEventListener("click", cancelExpand);
+Modal.attach("#confirmGenBackdrop", {onCancel: cancelExpand});
+$("#confirmGenOk").addEventListener("click", async ()=>{
+  const ctx = pendingExpand;
+  if(!ctx) return;
+  const cat = categories[ctx.index];
+  if(!cat) return;
+  const name = (cat.name || "").trim();
+  const oldProto = (cat.proto || "").trim();
+  const btn = ctx.btn;
+  const t0 = performance.now();
+  resetGenProgress();
+  startGenTimer(t0);
+  genAbort = new AbortController();
+  try{
+    if(btn){ btn.disabled = true; btn.textContent = "…"; }
+    const model = $("#genModelId").value.trim();
+    const reasoningOn = $("#reasonToggle").hidden ? null : $("#reasonCheck").checked;
+    logLine(`Modelo: ${model} · Categoría: ${name} · Razonamiento: ${reasoningOn === null ? "n/a" : (reasoningOn ? "activado" : "desactivado (esfuerzo bajo)")}`);
+    const content = await chatCompletion(model, [
+      { role: "system", content: "Amplías la descripción de una categoría de clasificación. Respondes SIEMPRE con JSON válido y nada más: sin explicaciones ni bloques de código." },
+      { role: "user", content:
+        `Categoría: ${name}\n` +
+        (oldProto ? `Descripción actual: ${oldProto}\n` : "") +
+        `Genera una lista extensa de ejemplos representativos de esta categoría: palabras clave, sinónimos, frases típicas y variantes, separadas por comas, en español. Incluye los ejemplos actuales si son pertinentes y amplíalos mucho más.\n` +
+        `Formato exacto: {"ejemplos":"..."}` }
+    ], ev => handleGenEvent(ev, t0), genAbort.signal, { reasoning: reasoningOn });
+    const parsed = parseLooseJSON(content);
+    const newProto = (typeof parsed === "string" ? parsed : (parsed.ejemplos || parsed.ejemplo || parsed.descripcion || parsed.description || parsed.proto || "")).trim();
+    if(!newProto) throw new Error("El modelo no devolvió ejemplos utilizables. Intenta de nuevo.");
+    pendingDiff = { index: ctx.index, oldProto, newProto };
+    $("#diffSub").textContent = `Categoría «${name}» · revisa el diff antes de aplicar.`;
+    $("#diffMeta").textContent = `${oldProto.length} → ${newProto.length} caracteres`;
+    $("#diffOld").textContent = oldProto || "(vacío)";
+    $("#diffNew").textContent = newProto;
+    Modal.close("#confirmGenBackdrop");
+    Modal.open("#diffBackdrop");
+    $("#diffAccept").focus();
+  }catch(e){
+    if(e && e.name === "AbortError"){
+      $("#genStatus").textContent = "Generación cancelada.";
+      logLine("Generación cancelada por el usuario.", "err");
+      showToast("Generación cancelada", "No se aplicó ningún cambio.");
+    }else{
+      $("#genStatus").textContent = "Error durante la generación.";
+      logLine(e.message, "err");
+      showToast("No se pudieron generar los ejemplos", e.message);
+    }
+  }finally{
+    stopGenTimer();
+    genAbort = null;
+    if(btn){ btn.disabled = false; btn.textContent = "✦"; }
+  }
+});
+$("#diffReject").addEventListener("click", ()=>{
+  pendingDiff = null;
+  Modal.close("#diffBackdrop");
+  showToast("Cambios rechazados", "La descripción de la categoría no se modificó.");
+});
+Modal.attach("#diffBackdrop", {onCancel: ()=>{ pendingDiff = null; Modal.close("#diffBackdrop"); }});
+$("#diffAccept").addEventListener("click", ()=>{
+  if(!pendingDiff) return;
+  const cat = categories[pendingDiff.index];
+  if(cat){
+    cat.proto = pendingDiff.newProto;
+    renderCategories();
+    saveSettings(false);
+    showToast("Ejemplos aplicados", `Categoría «${cat.name || pendingDiff.index + 1}» actualizada.`, "ok");
+  }
+  pendingDiff = null;
+  Modal.close("#diffBackdrop");
+});
+/* Escape/backdrop: centralizados en Modal (ver Modal.attach arriba y abajo). */
+
+/* Colapsar / expandir el bloque de generación (componente collapsible) */
+const genHead = $("#genHead"), genToggle = $("#genToggle"), genBody = $("#genBody");
+function setGenCollapsed(collapsed){
+  Collapsible.set(genToggle, genBody, collapsed, {
+    expandLabel: "Expandir generación con IA",
+    collapseLabel: "Colapsar generación con IA",
+    expandTitle: "Expandir",
+    collapseTitle: "Colapsar"
+  });
+}
+genHead.addEventListener("click", ()=> setGenCollapsed(!Collapsible.isCollapsed(genToggle)));
+
+/* ---------- Prueba de conexión automática ---------- */
+let testTimer = null;
+let lastOkSignature = "";
+let testing = false;
+
+function scheduleAutoTest(delay = 900){
+  clearTimeout(testTimer);
+  testTimer = setTimeout(autoTestConnection, delay);
+}
+
+async function autoTestConnection(){
+  const key = $("#apiKey").value.trim();
+  const model = $("#modelId").value.trim();
+  if(!key || !model || testing) return;      /* sin datos: no se prueba */
+  const signature = key + "|" + model;
+  if(signature === lastOkSignature) return;  /* ya validado */
+  testing = true;
+  try{
+    await getEmbeddings(["hola"]);
+    lastOkSignature = signature;
+  }catch(e){
+    lastOkSignature = "";
+    showToast("No se pudo conectar con OpenRouter", e.message);
+  }finally{
+    testing = false;
+  }
+}
+
+/* ---------- Clasificación: elegir método (embedding o LLM) ---------- */
+let pendingClassify = null;   /* { cats, entries } mientras se elige el método */
+
+function openMethodModal(){
+  $("#methodEmbedTag").textContent = $("#modelId").value.trim() || "modelo de embedding";
+  $("#methodLlmTag").textContent = $("#genModelId").value.trim() || "modelo generador";
+  Modal.open("#methodBackdrop");
+  $("#methodEmbed").focus();
+}
+$("#methodCancel").addEventListener("click", ()=>{ pendingClassify = null; Modal.close("#methodBackdrop"); });
+Modal.attach("#methodBackdrop", {onCancel: ()=>{ pendingClassify = null; Modal.close("#methodBackdrop"); }});
+$("#methodEmbed").addEventListener("click", ()=>{ const ctx = pendingClassify; pendingClassify = null; Modal.close("#methodBackdrop"); if(ctx) classifyWithEmbeddings(ctx); });
+$("#methodLlm").addEventListener("click", ()=>{ const ctx = pendingClassify; pendingClassify = null; Modal.close("#methodBackdrop"); if(ctx) classifyWithLlm(ctx); });
+
+async function classifyWithEmbeddings(ctx){
+  const btn = $("#classifyBtn");
+  try{
+    btn.disabled = true; btn.textContent = "Clasificando…";
+    const { embeddings, model, usage, ms } = await getEmbeddings([...ctx.prototypeInputs, ...ctx.entries.map(e=>e.input)]);
+    const catEmbs = embeddings.slice(0, ctx.prototypeInputs.length);
+    const entryEmbs = embeddings.slice(ctx.prototypeInputs.length);
+    lastResults = ctx.entries.map((entry, i)=>{
+      const scores = ctx.cats.map((c,ci)=>({ category:c.name, score: cosine(entryEmbs[i], catEmbs[ci]) })).sort((a,b)=>b.score-a.score);
+      const margin = scores.length>1 ? scores[0].score - scores[1].score : scores[0]?.score ?? 0;
+      return {
+        text: entry.label,
+        predicted: scores[0]?.category ?? "?",
+        scores, margin,
+        vectorDim: entryEmbs[i]?.length ?? 0,
+        thumb: entry.thumb || null
+      };
+    });
+    renderResults(lastResults, { model, usage, ms, tipo: inputType });
+    const unidad = inputType === "image"
+      ? (ctx.entries.length === 1 ? "imagen" : "imágenes")
+      : (ctx.entries.length === 1 ? "texto" : "textos");
+    showToast("Clasificación completada", `${ctx.entries.length} ${unidad} con «${model}» en ${ms} ms.`, "ok");
+  }catch(e){
+    showToast("No se pudo clasificar", e.message);
+  }finally{
+    btn.disabled = false;
+    btn.textContent = inputType === "image" ? "Clasificar imágenes →" : "Clasificar →";
+  }
+}
+
+async function classifyWithLlm(ctx){
+  const btn = $("#classifyBtn");
+  try{
+    const model = $("#genModelId").value.trim();
+    btn.disabled = true; btn.textContent = "Clasificando…";
+    const t0 = performance.now();
+    const catList = ctx.cats.map((c,i)=>`${i+1}. ${c.name}${c.proto ? " — " + c.proto : ""}`).join("\n");
+    const items = ctx.entries.map((e,i)=>`${i+1}. ${e.label}`).join("\n");
+    const content = await chatCompletion(model, [
+      { role: "system", content: "Clasificas textos en una de las categorías dadas. Respondes SIEMPRE con JSON válido y nada más: sin explicaciones ni bloques de código." },
+      { role: "user", content:
+        `Categorías:\n${catList}\n\n` +
+        `Textos a clasificar:\n${items}\n\n` +
+        `Para cada texto, indica el NOMBRE EXACTO de la categoría que mejor encaja (copia el nombre tal cual, sin números ni guiones).\n` +
+        `Formato exacto: {"resultados":[{"texto":"...","categoria":"NOMBRE_EXACTO"}]}` }
+    ], function (ev) {
+      if (ev && ev.type === "status") btn.textContent = "Clasificando… (" + ev.text + ")";
+    }, null, { maxTokens: 800 });
+    const parsed = parseLooseJSON(content);
+    const arr = Array.isArray(parsed) ? parsed : (parsed.resultados || parsed.results || parsed.items || []);
+    const byText = new Map();
+    arr.forEach(r=>{
+      if(r && typeof r === "object"){
+        const t = (r.texto || r.text || r.input || "").trim();
+        const c = (r.categoria || r.category || r.label || "").trim();
+        if(t && c) byText.set(t, c);
+      }
+    });
+    /* Normaliza la respuesta: acepta nombre exacto, número o coincidencia parcial */
+    const norm = s => (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/^\d+\s*[.)\-–—]\s*/, "").trim();
+    const resolveCat = raw => {
+      if(!raw) return "?";
+      const exact = ctx.cats.find(c => c.name === raw);
+      if(exact) return exact.name;
+      const n = norm(raw);
+      const byNorm = ctx.cats.find(c => norm(c.name) === n);
+      if(byNorm) return byNorm.name;
+      const num = parseInt(raw, 10);
+      if(!Number.isNaN(num) && ctx.cats[num - 1]) return ctx.cats[num - 1].name;
+      const partial = ctx.cats.find(c => norm(c.name).includes(n) || n.includes(norm(c.name)));
+      return partial ? partial.name : raw;
+    };
+    lastResults = ctx.entries.map((entry, i)=>{
+      const predicted = resolveCat(byText.get(entry.label));
+      return {
+        text: entry.label,
+        predicted,
+        scores: [{ category: predicted, score: 1 }],
+        margin: 1,
+        vectorDim: 0,
+        thumb: entry.thumb || null
+      };
+    });
+    const ms = Math.round(performance.now() - t0);
+    const served = lastChatInfo ? (lastChatInfo.model + " (" + lastChatInfo.provider + ")") : model;
+    renderResults(lastResults, { model: served, usage: null, ms, tipo: inputType, metodo: "LLM" });
+    const unidad = inputType === "image"
+      ? (ctx.entries.length === 1 ? "imagen" : "imágenes")
+      : (ctx.entries.length === 1 ? "texto" : "textos");
+    showToast("Clasificación completada", `${ctx.entries.length} ${unidad} con «${served}» en ${ms} ms.`, "ok");
+  }catch(e){
+    showToast("No se pudo clasificar", e.message);
+  }finally{
+    btn.disabled = false;
+    btn.textContent = inputType === "image" ? "Clasificar imágenes →" : "Clasificar →";
+  }
+}
+
+$("#classifyBtn").addEventListener("click", ()=>{
+  try{
+    const cats = categories
+      .map(c=>({ name:(c.name||"").trim(), proto:(c.proto||"").trim(), image:c.image||"" }))
+      .filter(c=>c.name);
+    if(cats.length < 2) throw new Error("Define al menos 2 categorías con nombre.");
+
+    /* Con imágenes se envían bloques de contenido; si no, texto simple (más compatible) */
+    const multimodal = inputType === "image" || cats.some(c=>c.image);
+    const textPart = t => multimodal ? { content:[{ type:"text", text:t }] } : t;
+    const imagePart = url => ({ content:[{ type:"image_url", image_url:{ url } }] });
+    const textProto = c => c.proto ? `${c.name}. ${c.proto}` : c.name;
+    const prototypeInputs = cats.map(c => c.image ? imagePart(c.image) : textPart(textProto(c)));
+
+    /* Entradas a clasificar */
+    let entries;
+    if(inputType === "image"){
+      if(!images.length) throw new Error("Añade al menos una imagen para clasificar.");
+      entries = images.map((im, i)=>({
+        label: im.name || `Imagen ${i+1}`,
+        thumb: im.dataUrl,
+        input: imagePart(im.dataUrl)
+      }));
+    }else{
+      const raw = $("#inputText").value.trim();
+      if(!raw) throw new Error("Escribe al menos un texto para clasificar.");
+      const texts = mode === "batch" ? raw.split(/\r?\n/).map(t=>t.trim()).filter(Boolean) : [raw];
+      if(!texts.length) throw new Error("No se encontró ningún texto válido.");
+      entries = texts.map(t=>({ label:t, input:textPart(t) }));
+    }
+
+    pendingClassify = { cats, entries, prototypeInputs };
+    openMethodModal();
+  }catch(e){
+    showToast("No se pudo clasificar", e.message);
+  }
+});
+
+function renderResults(results, info){
+  $("#resultsCard").hidden = false;
+  const label = info.tipo === "image" ? "Imágenes" : "Textos";
+  const metodo = info.metodo ? ` · Método: ${info.metodo}` : "";
+  const dim = info.metodo === "LLM" ? "" : ` · Dimensión: ${results[0]?.vectorDim ?? "?"}`;
+  $("#resultsMeta").textContent = `Modelo: ${info.model}${metodo} · ${label}: ${results.length} · Tiempo: ${info.ms} ms${info.usage?` · Tokens: ${info.usage.total_tokens ?? info.usage.prompt_tokens ?? "?"}`:""}${dim}`;
+  const box = $("#results");
+  box.innerHTML = "";
+  results.forEach((r,idx)=>{
+    const div = document.createElement("div");
+    div.className = "result";
+    div.innerHTML = `
+      ${r.thumb ? `<img class="result-thumb" src="${r.thumb}" alt="${escapeHtml(r.text)}">` : ""}
+      <div class="text">${idx+1}. ${escapeHtml(r.text)}</div>
+      <div class="pred">Predicción: <span class="badge ok">${escapeHtml(r.predicted)}</span>
+      <span style="color:var(--c-muted);font-size:13px"> · margen vs 2ª: ${r.margin.toFixed(4)}</span></div>
+      <div class="scores">
+        ${r.scores.map(sc=>{
+          const pct = 50 + (sc.score*50);
+          const winner = sc.category===r.predicted;
+          return `<div class="score-row ${winner?"winner":""}">
+            <span class="catname">${escapeHtml(sc.category)}</span>
+            <span class="bar"><i style="width:${Math.max(0,Math.min(100,pct))}%"></i></span>
+            <span class="num">${sc.score.toFixed(4)}</span>
+          </div>`;
+        }).join("")}
+      </div>
+      <div class="meta">${info.metodo === "LLM" ? "Clasificado por el LLM directamente, sin vectores." : `Similitud de coseno (rango -1 a 1). Más alto = más parecido. Vector de ${r.vectorDim} dimensiones.`}</div>
+      <details class="raw"><summary>Ver puntuaciones en JSON</summary><pre>${escapeHtml(JSON.stringify({ ...r, thumb: r.thumb ? "(imagen incrustada)" : null }, null, 2))}</pre></details>
+    `;
+    box.appendChild(div);
+  });
+  $("#resultsCard").scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+$("#copyJsonBtn").addEventListener("click", async ()=>{
+  if(!lastResults) return;
+  const clean = lastResults.map(r=>{
+    const { thumb, ...rest } = r;
+    return { ...rest, ...(thumb ? { imagen: r.text } : {}) };
+  });
+  try{ await navigator.clipboard.writeText(JSON.stringify(clean,null,2)); showToast("Resultados copiados", "JSON en el portapapeles.", "ok"); }
+  catch(e){ showToast("No se pudo copiar", e.message); }
+});
+
+$("#toggleKey").addEventListener("click", ()=>{
+  const el = $("#apiKey");
+  const show = el.type === "password";
+  el.type = show ? "text" : "password";
+  $("#toggleKey").textContent = show ? "Ocultar" : "Mostrar";
+});
+
+$("#exampleBtn").addEventListener("click", ()=>{
+  if(inputType === "image"){
+    images = [
+      { dataUrl: demoImage("#2f6bff", "#101a3a", "circle"), name: "ejemplo-circulo.jpg" },
+      { dataUrl: demoImage("#e0724a", "#3a1410", "square"), name: "ejemplo-cuadrado.jpg" }
+    ];
+    renderThumbs();
+    showToast("Imágenes de ejemplo cargadas", "Añade una imagen de prototipo a cada categoría para una clasificación visual precisa.", "ok");
+    return;
+  }
+  if(mode === "batch"){
+    $("#inputText").value = [
+      "Me encanta este producto, súper recomiendo, calidad excelente",
+      "Pésima experiencia, llegó roto y nadie responde, muy decepcionado",
+      "El paquete incluye dos cables USB-C y un manual de 12 páginas",
+      "El partido de ayer fue increíble, ganamos 3 a 1 en el último minuto",
+      "Necesito cambiar mi contraseña, no puedo entrar a mi cuenta",
+      "Quiero cancelar mi suscripción y que no me vuelvan a cobrar"
+    ].join("\n");
+  } else {
+    $("#inputText").value = "Me encanta este producto, súper recomiendo, calidad excelente";
+  }
+});
+/* Guardado automático mientras se escribe + prueba de conexión al terminar */
+["apiKey","modelId","dimensions"].forEach(id=>{
+  $("#"+id).addEventListener("input", ()=> saveSettings());
+  $("#"+id).addEventListener("change", ()=> scheduleAutoTest());
+});
+$("#genModelId").addEventListener("input", ()=> saveSettings());
+
+loadSettings();
+if (window.PerfilSync) {
+  window.PerfilSync.init();
+}
+</script>
+</body>
+</html>
